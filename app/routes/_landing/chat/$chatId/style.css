@@ -1,0 +1,37 @@
+.sender {
+  display: flex;
+  margin: 0.5rem 0;
+}
+
+.sender > .message {
+  width: auto;
+  background: var(--primary-color);
+  padding: 0.5rem 0.8rem;
+  border-radius: 1rem;
+  border-bottom-left-radius: 0;
+  max-width: 60%;
+}
+
+.receiver {
+  margin: 0.5rem 0;
+  display: flex;
+  justify-content: end;
+}
+
+.receiver > .message {
+  width: auto;
+  background: var(--highlight-color);
+  padding: 0.5rem 0.8rem;
+  border-radius: 1rem;
+  border-bottom-right-radius: 0;
+  max-width: 60%;
+}
+
+@media (max-width: 600px) {
+  .sender > .message {
+    max-width: 80%;
+  }
+  .receiver > .message {
+    max-width: 80%;
+  }
+}

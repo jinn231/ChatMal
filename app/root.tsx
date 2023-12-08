@@ -8,10 +8,15 @@ import {
   Scripts,
   ScrollRestoration,
 } from "@remix-run/react";
+import style from "./styles/global.css";
+import preludeStyle from "./styles/prelude.css";
 
 export const links: LinksFunction = () => [
+  { rel: "stylesheet", href: style },
+  { rel: "stylesheet", href: preludeStyle },
   ...(cssBundleHref ? [{ rel: "stylesheet", href: cssBundleHref }] : []),
 ];
+
 
 export default function App() {
   return (

@@ -1,0 +1,47 @@
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  color: white;
+  font-weight: 600;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+p,
+span,
+strong,
+small {
+  color: white;
+}
+
+input {
+  padding: 0.5rem;
+  background: #fafafa;
+  border-radius: 0.5rem;
+  color: black;
+  outline: none;
+  border: 2px solid var(--primary-color);
+}
+
+button > * {
+  transition: all 0.5s;
+}
+
+button:active > * {
+  transform: scale(0.9);
+}
+
+a > * {
+  transition: all 0.5s;
+}
+
+a:active > * {
+  transform: scale(0.9);
+}
