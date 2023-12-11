@@ -1,4 +1,14 @@
+import { LoaderFunctionArgs } from "@remix-run/node";
 import { Link } from "@remix-run/react";
+import { authenticate } from "~/model/auth.server";
+import { getUserById } from "~/model/user.server";
+
+// export async function loader({ request }: LoaderFunctionArgs) {
+//   const {following} = await authenticate(request, userId => getUserById(userId));
+
+
+
+// }
 
 export default function ChatRoute() {
   return (

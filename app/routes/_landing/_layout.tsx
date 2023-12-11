@@ -1,8 +1,11 @@
 import {
+  LoaderFunctionArgs,
   type LinksFunction,
   type MetaFunction,
+  TypedResponse,
+  json,
 } from "@remix-run/node";
-import { Form, Link, NavLink, Outlet } from "@remix-run/react";
+import { Form, Link, NavLink, Outlet, useLoaderData } from "@remix-run/react";
 import styles from "./style.css";
 import HomeIcon from "~/components/icons/HomeIcon";
 import ChatIcon from "~/components/icons/ChatIcon";
@@ -11,6 +14,9 @@ import RecommendIcon from "~/components/icons/RecommendIcon";
 import SettingIcon from "~/components/icons/SettingIcon";
 import LogoutIcon from "~/components/icons/LogoutIcon";
 import MobileSettingIcon from "~/components/icons/MobileSettingIcon";
+import { authenticate } from "~/model/auth.server";
+import type { UserInfo} from "~/model/user.server";
+import { getUserById } from "~/model/user.server";
 
 export const links: LinksFunction = () => [{ rel: "stylesheet", href: styles }];
 
@@ -21,6 +27,14 @@ export const meta: MetaFunction = () => {
   ];
 };
 
+export async function loader({
+  request,
+}: LoaderFunctionArgs): Promise<TypedResponse<UserInfo>> {
+  const user = await authenticate(request, (userId) => getUserById(userId));
+
+  return json(user);
+}
+
 export function ErrorBoundary() {
   // const error = useRouteError();
 
@@ -28,6 +42,8 @@ export function ErrorBoundary() {
 }
 
 export default function LandingRoute() {
+  const { name } = useLoaderData<typeof loader>();
+
   return (
     <div className="flex h-screen overflow-hidden">
       <nav className="nav-container py-5 h-full relative">
@@ -39,8 +55,8 @@ export default function LandingRoute() {
               alt="profile"
             />
             <Link to={"/setting"} className="flex items-center">
-              <p className="underline underline-offset-1">
-                <strong>Ko Ko</strong>
+              <p className="underline underline-offset-1 whitespace-nowrap">
+                <strong>{name}</strong>
               </p>
               <SettingIcon />
             </Link>

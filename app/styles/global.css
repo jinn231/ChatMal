@@ -2,12 +2,21 @@
 @tailwind components;
 @tailwind utilities;
 
+@font-face {
+  font-family: mulish ;
+  src: url("/public/fonts/Mulish-SemiBold.ttf");
+}
+
 :root {
   --background-color: #000000;
   --primary-color: rgb(38, 38, 255);
   --secondary-color: #fafafa;
   --highlight-color: rgb(17, 94, 17);
   --error-color: #eb1919;
+}
+
+*{
+  font-family: mulish, sans-serif;
 }
 
 body {

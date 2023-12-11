@@ -1,9 +1,7 @@
 import { getClientIPAddress } from "remix-utils/get-client-ip-address";
-import type { UserInfo } from "./user.server";
 import {
   createUser,
   getUserByEmail,
-  getUserById,
   getUserForAuthentication,
   getUserId,
 } from "./user.server";
@@ -96,12 +94,15 @@ export async function login({
   };
 }
 
-export async function authenticate(
-  request: Request
-): Promise<UserInfo> {
+export async function authenticate<T>(
+  request: Request,
+  getUser: (userId: string) => Promise<T | null>
+): Promise<T> {
   const userId = await getUserId(request);
 
-  const user = userId !== null ? await getUserById(userId) : null;
+  console.log(userId)
+
+  const user = userId !== null ? await getUser(userId) : null;
 
   if (user === null) {
     throw redirect("/login");

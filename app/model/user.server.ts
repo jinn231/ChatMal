@@ -3,7 +3,10 @@ import { db } from "~/utils/db.server";
 import bcrypt from "bcrypt";
 import { getSession } from "~/utils/session.server";
 
-export type UserInfo = Pick<User, "id" | "email" | "name">;
+export type UserInfo = Pick<
+  User,
+  "id" | "email" | "name" | "followers" | "following"
+>;
 
 export async function getUserByEmail(email: string): Promise<UserInfo | null> {
   return await db.user.findFirst({
@@ -59,18 +62,90 @@ export async function getUserForAuthentication(
   });
 }
 
-export async function getAllUnfriendUser(userId: string): Promise<UserInfo[]> {
+export async function getAllFriends(userId: string): Promise<UserInfo[]> {
   return await db.user.findMany({
     where: {
       id: {
         not: userId,
       },
     },
-    select: {
-      id: true,
-      name: true,
-      email: true,
-      friends: true,
+  });
+}
+
+export async function follow({
+  id,
+  followerId,
+}: {
+  id: string;
+  followerId: string;
+}) {
+  await db.user.update({
+    where: {
+      id: id,
+    },
+    data: {
+      followers: {
+        push: followerId,
+      },
     },
   });
+  await db.user.update({
+    where: {
+      id: followerId,
+    },
+    data: {
+      following: {
+        push: id,
+      },
+    },
+  });
+}
+
+export async function unfollow({
+  id,
+  unFollowerId,
+}: {
+  id: string;
+  unFollowerId: string;
+}) {
+  const currentUser = await db.user.findFirst({
+    where: {
+      id: unFollowerId,
+    },
+  });
+
+  const user = await db.user.findFirst({
+    where: {
+      id: id,
+    },
+  });
+
+  await db.user.update({
+    where: {
+      id: id,
+    },
+    data: {
+      followers: user?.followers.filter((i) => i !== unFollowerId),
+    },
+  });
+  await db.user.update({
+    where: {
+      id: unFollowerId,
+    },
+    data: {
+      following: currentUser?.following.filter((i) => i !== id),
+    },
+  });
+}
+
+export async function getUserByList(users: string[]): Promise<UserInfo[]> {
+  const newUsers = await Promise.all(
+    users.map(async (userId) => {
+      return await getUserById(userId);
+    })
+  );
+
+  const filteredUsers = newUsers.filter((user) => user !== null) as UserInfo[];
+
+  return filteredUsers;
 }
