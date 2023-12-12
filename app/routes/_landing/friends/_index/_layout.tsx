@@ -16,10 +16,17 @@ import {
   getUserByList,
   unfollow,
 } from "~/model/user.server";
-import { Form, Link, useLoaderData } from "@remix-run/react";
+import {
+  Form,
+  Link,
+  useActionData,
+  useFetcher,
+  useLoaderData,
+} from "@remix-run/react";
 import { z } from "zod";
 import { Result } from "~/utils/result.server";
 import { FormError } from "~/utils/error.server";
+import { createConversation } from "~/model/conversation.server";
 
 export const links: LinksFunction = () => [{ rel: "stylesheet", href: styles }];
 
@@ -72,12 +79,15 @@ export async function action({
       });
     }
 
+    await createConversation({
+      senderId: id,
+      members: [userId],
+    });
     await follow({
       id: userId,
       followerId: id,
     });
   } else {
-
     // unfollow
     await unfollow({
       id: userId,
@@ -169,7 +179,9 @@ export default function FriendRoute() {
             ))}
           </>
         ) : filterFriend === "followers" ? (
-          followers.map((user) => <Follower user={user} />)
+          followers.map((user) => (
+            <Follower user={user} following={following} />
+          ))
         ) : null}
       </div>
     </main>
@@ -177,6 +189,12 @@ export default function FriendRoute() {
 }
 
 function NewFriends({ user }: { user: UserInfo }): JSX.Element {
+  const fetcher = useFetcher();
+
+  if (fetcher.state === "submitting" || fetcher.state === "loading") {
+    return <></>;
+  }
+
   return (
     <div className="flex items-center gap-2 border-b py-2">
       <img
@@ -189,13 +207,13 @@ function NewFriends({ user }: { user: UserInfo }): JSX.Element {
           <p className="underline">{user.name}</p>
         </Link>
         <div className="flex gap-1">
-          <Form method="POST">
+          <fetcher.Form method="POST">
             <input type="hidden" name="type" value={"follow"} />
             <input type="hidden" name="userId" value={user.id} />
             <button className="bg-[green]  px-1 text-center flex items-center rounded-[.2rem]">
               <small>Follow</small>
             </button>
-          </Form>
+          </fetcher.Form>
         </div>
       </div>
     </div>
@@ -203,6 +221,12 @@ function NewFriends({ user }: { user: UserInfo }): JSX.Element {
 }
 
 function Following({ user }: { user: UserInfo }): JSX.Element {
+  const fetcher = useFetcher();
+
+  if (fetcher.state === "submitting" || fetcher.state === "loading") {
+    return <></>;
+  }
+
   return (
     <div className="flex items-center gap-2 border-b py-2">
       <img
@@ -215,33 +239,54 @@ function Following({ user }: { user: UserInfo }): JSX.Element {
           <p className="underline">{user.name}</p>
         </Link>
         <div className="flex gap-1">
-          <Form method="POST">
+          <fetcher.Form method="POST">
             <input type="hidden" name="type" value={"unfollow"} />
             <input type="hidden" name="userId" value={user.id} />
             <button className="bg-[var(--error-color)]  px-1 text-center flex items-center rounded-[.2rem]">
               <small>Unfollow</small>
             </button>
-          </Form>
+          </fetcher.Form>
         </div>
       </div>
     </div>
   );
 }
 
-function Follower({ user }: { user: UserInfo }): JSX.Element {
+function Follower({
+  user,
+  following,
+}: {
+  user: UserInfo;
+  following: UserInfo[];
+}): JSX.Element {
+  const fetcher = useFetcher();
+  const userExists = following.find((item) => item.id === user.id);
+
+  if (fetcher.state === "loading" || fetcher.state === "submitting") {
+    return <></>;
+  }
+
   return (
-    <Link to={`/friends/${user.id}`}>
-      <div className="flex items-center gap-2 border-b py-2">
-        <img
-          className="w-[45px] h-[45px] rounded-full"
-          src="/images/avatars/gentleman.png"
-          alt="profile"
-        />
-        <div>
-          <p>{user.name}</p>
-          <div className="flex gap-1"></div>
-        </div>
+    <div className="flex items-center gap-2 border-b py-2">
+      <img
+        className="w-[45px] h-[45px] rounded-full"
+        src="/images/avatars/gentleman.png"
+        alt="profile"
+      />
+      <div>
+        <Link to={`/friends/${user.id}`}>
+          <p className="underline">{user.name}</p>
+        </Link>
+        {!userExists && (
+          <fetcher.Form method="POST">
+            <input type="hidden" name="type" value={"follow"} />
+            <input type="hidden" name="userId" value={user.id} />
+            <button className="bg-[#eee]  px-1 text-center flex items-center rounded-[.2rem]">
+              <small className="text-black">Follow Back</small>
+            </button>
+          </fetcher.Form>
+        )}
       </div>
-    </Link>
+    </div>
   );
 }

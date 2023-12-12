@@ -1,6 +1,10 @@
-import type { LinksFunction } from "@remix-run/node";
+import { json, redirect, type LinksFunction, TypedResponse } from "@remix-run/node";
 import SendIcon from "~/components/icons/SendIcon";
 import styles from "./style.css";
+import LeftArrowIcon from "~/components/icons/LeftArrowIcon";
+import { authenticate } from "~/model/auth.server";
+import { UserInfo, getUserById } from "~/model/user.server";
+import { LoaderFunctionArgs } from "react-router-dom";
 
 export const links: LinksFunction = () => [{ rel: "stylesheet", href: styles }];
 
@@ -8,8 +12,12 @@ export default function ChatSessionRoute() {
   return (
     <div className="w-full h-full relative">
       <nav className="flex items-center p-3 gap-3 border-b border-[var(--primary-color)] mx-3">
+        <button onClick={() => history.back()}>
+          <LeftArrowIcon />
+        </button>
+
         <img
-          className="w-[60px] h-[60px] rounded-full"
+          className="w-[50px] h-[50px] rounded-full"
           src="/images/avatars/gentleman.png"
           alt="profile"
         />

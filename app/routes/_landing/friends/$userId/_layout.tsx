@@ -35,9 +35,9 @@ export default function UsersProfileLayout() {
 
   return (
     <main className="w-full p-5">
-      <Link to={"/friends"}>
+      <button onClick={() => history.back()}>
         <LeftArrowIcon />
-      </Link>
+      </button>
       <div className="max-w-[240px] flex flex-col gap-3">
         <img
           className="w-60 h-60 rounded-full"
@@ -46,7 +46,7 @@ export default function UsersProfileLayout() {
         />
         <div className="flex gap-2 items-center">
           <h2 className="text-xl font-medium text-center">@ {user.name}</h2>
-          <Link to={"/chat/abcd"}>
+          <Link to={`/chat/${user.id}`}>
             <MessageIcon />
           </Link>
         </div>
