@@ -80,8 +80,7 @@ export async function action({
     }
 
     await createConversation({
-      senderId: id,
-      members: [userId],
+      members: [id, userId],
     });
     await follow({
       id: userId,

@@ -29,11 +29,15 @@ model User {
   lastLoginIp  String?
   passwordHash String
   SessionToken SessionToken[]
-  Conversation Conversation[]
-  createdAt    DateTime       @default(now())
-  updatedAt    DateTime       @updatedAt
-  followers    String[]
-  following    String[]
+
+  conversationIds String[]       @db.ObjectId
+  Conversation    Conversation[] @relation(fields: [conversationIds], references: [id])
+
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  followers String[]
+  following String[]
+  Messages  Messages[]
 }
 
 model SessionToken {
@@ -48,9 +52,8 @@ model SessionToken {
 model Conversation {
   id        String          @id @default(auto()) @map("_id") @db.ObjectId
   type      CHAT_ROOM_TYPES
-  members   String[]
-  senderId  String          @db.ObjectId
-  sender    User            @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  userIds   String[]        @db.ObjectId
+  users     User[]          @relation(fields: [userIds], references: [id])
   createdAt DateTime        @default(now())
   updatedAt DateTime        @updatedAt
   Messages  Messages[]
@@ -59,9 +62,11 @@ model Conversation {
 model Messages {
   id             String       @id @default(auto()) @map("_id") @db.ObjectId
   conversationId String       @db.ObjectId
-  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  conversation   Conversation @relation(fields: [conversationId], references: [id])
   message        String
   seen           Boolean
+  senderId       String       @db.ObjectId
+  sender         User         @relation(fields: [senderId], references: [id])
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
 }

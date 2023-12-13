@@ -1,32 +1,44 @@
-import { CHAT_ROOM_TYPES } from "@prisma/client";
+import { CHAT_ROOM_TYPES, Conversation, Messages } from "@prisma/client";
 import { db } from "~/utils/db.server";
+import { UserInfo } from "./user.server";
 
-export async function createConversation({
-  senderId,
-  members,
-}: {
-  senderId: string;
-  members: string[];
-}) {
+export async function createConversation({ members }: { members: string[] }) {
   await db.conversation.create({
     data: {
-      senderId: senderId,
-      members: members.filter((m) => m !== senderId),
+      userIds: members,
       type:
-        members.length === 1
-          ? CHAT_ROOM_TYPES.NORMAL_CHAT
-          : CHAT_ROOM_TYPES.GROUP_CHAT,
+        members.length > 2
+          ? CHAT_ROOM_TYPES.GROUP_CHAT
+          : CHAT_ROOM_TYPES.NORMAL_CHAT,
     },
   });
 }
 
-export async function getConversations({ userId }: { userId: string }) {
-  await db.conversation.findMany({
+export async function getConversations({ userId }: { userId: string }): Promise<
+  (Conversation & {
+    Messages: Messages[];
+    users: UserInfo[];
+  })[]
+> {
+  return await db.conversation.findMany({
     where: {
-      senderId: userId,
+      userIds: {
+        has: userId,
+      },
     },
     include: {
       Messages: true,
+      users: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          passwordHash: false,
+          role: true,
+          followers: true,
+          following: true,
+        },
+      },
     },
     orderBy: {
       updatedAt: "desc",
