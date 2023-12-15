@@ -5,7 +5,7 @@ import {
   TypedResponse,
   json,
 } from "@remix-run/node";
-import { Form, Link, NavLink, Outlet, useLoaderData } from "@remix-run/react";
+import { Form, Link, NavLink, Outlet, isRouteErrorResponse, useLoaderData, useRouteError } from "@remix-run/react";
 import styles from "./style.css";
 import HomeIcon from "~/components/icons/HomeIcon";
 import ChatIcon from "~/components/icons/ChatIcon";
@@ -35,11 +35,6 @@ export async function loader({
   return json(user);
 }
 
-export function ErrorBoundary() {
-  // const error = useRouteError();
-
-  return <>{/* Error */}</>;
-}
 
 export default function LandingRoute() {
   const { name } = useLoaderData<typeof loader>();

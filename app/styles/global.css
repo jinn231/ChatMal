@@ -23,6 +23,10 @@ body {
   background: var(--background-color);
 }
 
+.error-boundary{
+  background: #000000;
+}
+
 .button {
   border: 1px solid var(--primary-color);
   color: white;
@@ -43,4 +47,12 @@ body {
       scrollbar-width: none; /* Firefox */
     }
   }
+}
+
+
+.error-page-container{
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
 }

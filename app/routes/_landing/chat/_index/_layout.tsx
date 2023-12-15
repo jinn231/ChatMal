@@ -34,7 +34,7 @@ export default function ChatRoute() {
     <div className="w-full h-full overflow-auto">
       <h1 className="p-5 text-2xl">Chat Mal</h1>
       <div className="w-[90%] mx-auto flex flex-col gap-3">
-        {conversations.map((conversation) => (
+        {conversations.length !== 0 ? (conversations.map((conversation) => (
           <Link key={conversation.id} to={`/chat/${conversation.id}`}>
             <section className="text-white border border-[var(--primary-color)] w-full p-2 rounded-md shadow shadow-[var(--primary-color)]">
               <div className="flex items-center gap-3">
@@ -46,7 +46,9 @@ export default function ChatRoute() {
                 <div>
                   <p>
                     {conversation.users.map((user) => (
-                      <strong key={user.id}>{user.id !== currentUser.id && user.name}</strong>
+                      <strong key={user.id}>
+                        {user.id !== currentUser.id && user.name}
+                      </strong>
                     ))}
                   </p>
                   <small>Ko Ko: Nay Kg Lr</small>
@@ -54,7 +56,12 @@ export default function ChatRoute() {
               </div>
             </section>
           </Link>
-        ))}
+        ))) : (
+          <div className="text-center my-2">
+            <h2 className="text-2xl">You don't have any conversation yet !</h2>
+            <p className="text-md font-semibold">Find new friends and chat with them <Link to={"/friends"} className="underline"><span className="text-[#43ff3d]">Go To Friends</span></Link></p>
+          </div>
+        )}
       </div>
     </div>
   );

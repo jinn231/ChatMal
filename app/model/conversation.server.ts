@@ -45,3 +45,55 @@ export async function getConversations({ userId }: { userId: string }): Promise<
     },
   });
 }
+
+export async function isConversationAlreadyExist({
+  currentUserId,
+  userId,
+}: {
+  currentUserId: string;
+  userId: string;
+}): Promise<boolean> {
+  const conversation = await db.conversation.findFirst({
+    where: {
+      userIds: {
+        hasEvery: [currentUserId, userId],
+      },
+    },
+  });
+
+  console.log(conversation);
+
+  if (conversation) {
+    return true;
+  }
+
+  return false;
+}
+
+export async function getConversationById(conversationId: string): Promise<
+  | (Conversation & {
+      Messages: Messages[];
+      users: UserInfo[];
+    })
+  | null
+> {
+  return await db.conversation.findUnique({
+    where: {
+      id: conversationId,
+    },
+    include: {
+      Messages: true,
+      users: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          passwordHash: false,
+          role: true,
+          followers: true,
+          following: true,
+        },
+      },
+    }
+  });
+}

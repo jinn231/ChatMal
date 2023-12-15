@@ -26,7 +26,10 @@ import {
 import { z } from "zod";
 import { Result } from "~/utils/result.server";
 import { FormError } from "~/utils/error.server";
-import { createConversation } from "~/model/conversation.server";
+import {
+  createConversation,
+  isConversationAlreadyExist,
+} from "~/model/conversation.server";
 
 export const links: LinksFunction = () => [{ rel: "stylesheet", href: styles }];
 
@@ -79,9 +82,16 @@ export async function action({
       });
     }
 
-    await createConversation({
-      members: [id, userId],
-    });
+    if (
+      !(await isConversationAlreadyExist({
+        currentUserId: id,
+        userId: userId,
+      }))
+    ) {
+      await createConversation({
+        members: [id, userId],
+      });
+    }
     await follow({
       id: userId,
       followerId: id,
