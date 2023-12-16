@@ -26,6 +26,7 @@ input {
   background: #fafafa;
   border-radius: 0.5rem;
   color: black;
+  min-width: 100px;
   outline: none;
   border: 2px solid var(--primary-color);
 }

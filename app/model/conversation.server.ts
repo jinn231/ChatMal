@@ -72,7 +72,7 @@ export async function isConversationAlreadyExist({
 
 export async function getConversationById(conversationId: string): Promise<
   | (Conversation & {
-      Messages: Messages[];
+      Messages: (Messages & { sender: { name: string } })[];
       users: UserInfo[];
     })
   | null
@@ -82,7 +82,22 @@ export async function getConversationById(conversationId: string): Promise<
       id: conversationId,
     },
     include: {
-      Messages: true,
+      Messages: {
+        select: {
+          id: true,
+          conversationId: true,
+          message: true,
+          seen: true,
+          senderId: true,
+          sender: {
+            select: {
+              name: true,
+            },
+          },
+          createdAt: true,
+          updatedAt: true,
+        },
+      },
       users: {
         select: {
           id: true,
@@ -94,6 +109,6 @@ export async function getConversationById(conversationId: string): Promise<
           following: true,
         },
       },
-    }
+    },
   });
 }
