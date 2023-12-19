@@ -7,6 +7,10 @@
 import { RemixBrowser } from "@remix-run/react";
 import { startTransition, StrictMode } from "react";
 import { hydrateRoot } from "react-dom/client";
+import relativeTime from "dayjs/plugin/relativeTime.js";
+import dayjs from "dayjs";
+
+dayjs.extend(relativeTime);
 
 startTransition(() => {
   hydrateRoot(

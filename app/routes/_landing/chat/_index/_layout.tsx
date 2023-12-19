@@ -1,9 +1,35 @@
 import { Conversation, Messages } from "@prisma/client";
-import { LoaderFunctionArgs, TypedResponse, json } from "@remix-run/node";
-import { Link, useLoaderData } from "@remix-run/react";
+import {
+  ActionFunctionArgs,
+  LoaderFunctionArgs,
+  SerializeFrom,
+  TypedResponse,
+  json,
+} from "@remix-run/node";
+import { Form, Link, useFetcher, useLoaderData } from "@remix-run/react";
+import dayjs from "dayjs";
+import { ForwardedRef, useRef } from "react";
+import { z } from "zod";
+import Dialog from "~/components/Dialog";
+import BlockIcon from "~/components/icons/BlockIcon";
+import DeleteIcon from "~/components/icons/DeleteIcon";
 import { authenticate } from "~/model/auth.server";
-import { getConversations } from "~/model/conversation.server";
+import {
+  deleteConversationById,
+  getConversations,
+} from "~/model/conversation.server";
 import { UserInfo, getUserById } from "~/model/user.server";
+import { FormError } from "~/utils/error.server";
+import { Result } from "~/utils/result.server";
+
+type ConversationForm = z.infer<typeof ConversationFormSchema>;
+
+const ConversationFormSchema = z.discriminatedUnion("type", [
+  z.object({
+    type: z.literal("delete"),
+    conversationId: z.string(),
+  }),
+]);
 
 export async function loader({ request }: LoaderFunctionArgs): Promise<
   TypedResponse<{
@@ -26,43 +52,176 @@ export async function loader({ request }: LoaderFunctionArgs): Promise<
   });
 }
 
+export async function action({
+  request,
+}: ActionFunctionArgs): Promise<
+  TypedResponse<Result<null, FormError<ConversationForm, string>>>
+> {
+  await authenticate(request, (userId) => getUserById(userId));
+
+  const fields = Object.fromEntries(await request.formData());
+
+  const parsedResult = ConversationFormSchema.safeParse(fields);
+
+  if (!parsedResult.success) {
+    return json({
+      ok: false,
+      error: {
+        fields: fields,
+        errors: parsedResult.error.format(),
+      },
+    });
+  }
+
+  if (parsedResult.data.type === "delete") {
+    const { conversationId } = parsedResult.data;
+    await deleteConversationById(conversationId);
+  }
+
+  return json({ ok: true, data: null });
+}
+
 export default function ChatRoute() {
   const { conversations, currentUser } = useLoaderData<typeof loader>();
-  console.log(conversations);
 
   return (
     <div className="w-full h-full overflow-auto">
       <h1 className="p-5 text-2xl">Chat Mal</h1>
       <div className="w-[90%] mx-auto flex flex-col gap-3">
-        {conversations.length !== 0 ? (conversations.map((conversation) => (
-          <Link key={conversation.id} to={`/chat/${conversation.id}`}>
-            <section className="text-white border border-[var(--primary-color)] w-full p-2 rounded-md shadow shadow-[var(--primary-color)]">
-              <div className="flex items-center gap-3">
-                <img
-                  className="w-[60px] h-[60px] rounded-full"
-                  src="/images/avatars/gentleman.png"
-                  alt="profile"
-                />
-                <div>
-                  <p>
-                    {conversation.users.map((user) => (
-                      <strong key={user.id}>
-                        {user.id !== currentUser.id && user.name}
-                      </strong>
-                    ))}
-                  </p>
-                  <small>Ko Ko: Nay Kg Lr</small>
-                </div>
-              </div>
-            </section>
-          </Link>
-        ))) : (
+        {conversations.length !== 0 ? (
+          conversations.map((conversation) => (
+            <ContactUser
+              conversation={conversation}
+              currentUser={currentUser}
+            />
+          ))
+        ) : (
           <div className="text-center my-2">
             <h2 className="text-2xl">You don't have any conversation yet !</h2>
-            <p className="text-md font-semibold">Find new friends and chat with them <Link to={"/friends"} className="underline"><span className="text-[#43ff3d]">Go To Friends</span></Link></p>
+            <p className="text-md font-semibold">
+              Find new friends and chat with them{" "}
+              <Link to={"/users"} className="underline">
+                <span className="text-[#43ff3d]">Go To Friends</span>
+              </Link>
+            </p>
           </div>
         )}
       </div>
     </div>
+  );
+}
+
+function ContactUser({
+  conversation,
+  currentUser,
+}: {
+  conversation: SerializeFrom<
+    Conversation & {
+      Messages: Messages[];
+      users: UserInfo[];
+    }
+  >;
+  currentUser: SerializeFrom<UserInfo>;
+}): JSX.Element {
+  const deleteRef = useRef<HTMLDialogElement>(null);
+  const fetcher = useFetcher();
+
+  if (fetcher.state === "loading" || fetcher.state === "submitting") {
+    return <></>;
+  }
+  return (
+    <section className="text-white border border-[var(--primary-color)] w-full p-2 rounded-md shadow shadow-[var(--primary-color)] flex justify-between items-center">
+      <Link
+        className="flex-1"
+        key={conversation.id}
+        to={`/chat/${conversation.id}`}
+      >
+        <div className="flex items-center gap-3">
+          <img
+            className="w-[60px] h-[60px] rounded-full"
+            src="/images/avatars/gentleman.png"
+            alt="profile"
+          />
+          <div>
+            <p>
+              {conversation.users.map((user) => (
+                <strong key={user.id}>
+                  {user.id !== currentUser.id && user.name}
+                </strong>
+              ))}
+            </p>
+
+            {conversation.users.map((user) => {
+              if (user.id !== currentUser.id) {
+                const lastActiveTime = dayjs(user.lastActiveAt);
+                const currentTime = dayjs();
+                const timeDifference = currentTime.diff(
+                  lastActiveTime,
+                  "minutes"
+                );
+
+                return (
+                  <small>
+                    {timeDifference <= 3
+                      ? "Active now"
+                      : `Active ${lastActiveTime.fromNow()}`}
+                  </small>
+                );
+              }
+            })}
+          </div>
+        </div>
+      </Link>
+      <div className="flex gap-3">
+        <button onClick={() => deleteRef.current?.showModal()}>
+          <DeleteIcon />
+        </button>
+        <Dialog
+          className="border-2 bg-black w-[500px] min-w-[300px] border-[var(--primary-color)] rounded"
+          ref={deleteRef}
+        >
+          <h2 className="bg-[var(--primary-color)] p-2">Delete</h2>
+          <div className="flex flex-col items-center gap-5 p-5">
+            <p className="font-medium">
+              Are you sure you want to delete{" "}
+              {conversation.users.map(
+                (user) => user.id !== currentUser.id && user.name
+              )}
+              {" from your contact ?"}
+            </p>
+            <span className="self-start font-medium">
+              ⚠️ That will also delete for{" "}
+              {conversation.users.map(
+                (user) => user.id !== currentUser.id && user.name
+              )}{" "}
+              !
+            </span>
+            <div className="flex gap-5">
+              <fetcher.Form method="POST">
+                <input
+                  type="hidden"
+                  name="conversationId"
+                  value={conversation.id}
+                />
+                <input type="hidden" name="type" value="delete" />
+                <button className="text-white px-4 py-[.5rem] rounded bg-[#ff0a0a]">
+                  <span>Delete</span>
+                </button>
+              </fetcher.Form>
+              <button
+                className="text-white border button border-red-500"
+                onClick={() => deleteRef.current?.close()}
+              >
+                <span>Cancel</span>
+              </button>
+            </div>
+          </div>
+        </Dialog>
+
+        <button>
+          <BlockIcon />
+        </button>
+      </div>
+    </section>
   );
 }

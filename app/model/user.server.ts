@@ -1,11 +1,11 @@
-import type { User } from "@prisma/client";
+import type { User, UserRole } from "@prisma/client";
 import { db } from "~/utils/db.server";
 import bcrypt from "bcrypt";
 import { getSession } from "~/utils/session.server";
 
 export type UserInfo = Pick<
   User,
-  "id" | "email" | "name" | "followers" | "following"
+  "id" | "email" | "name" | "followers" | "following" | "lastActiveAt"
 >;
 
 export async function getUserByEmail(email: string): Promise<UserInfo | null> {
@@ -148,4 +148,50 @@ export async function getUserByList(users: string[]): Promise<UserInfo[]> {
   const filteredUsers = newUsers.filter((user) => user !== null) as UserInfo[];
 
   return filteredUsers;
+}
+
+export async function updateUser({
+  userId,
+  name,
+  email,
+  role,
+  lastActiveAt,
+}: {
+  userId: string;
+  name?: string;
+  email?: string;
+  role?: UserRole;
+  lastActiveAt?: Date;
+}) {
+  await db.user.update({
+    where: {
+      id: userId,
+    },
+    data: {
+      name: name,
+      email: email,
+      role: role,
+      lastActiveAt: lastActiveAt,
+    },
+  });
+}
+
+export async function isUserFollowEachOther({
+  userId1,
+  userId2,
+}: {
+  userId1: string;
+  userId2: string;
+}): Promise<boolean> {
+  const user = await db.user.findUnique({
+    where: {
+      id: userId1,
+    },
+  });
+
+  if (user?.following.includes(userId2) && user.followers.includes(userId2)) {
+    return true;
+  }
+
+  return false;
 }

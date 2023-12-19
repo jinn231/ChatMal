@@ -1,15 +1,27 @@
-import { CHAT_ROOM_TYPES, Conversation, Messages } from "@prisma/client";
+import {
+  CHAT_ROOM_STATUS,
+  CHAT_ROOM_TYPES,
+  Conversation,
+  Messages,
+} from "@prisma/client";
 import { db } from "~/utils/db.server";
 import { UserInfo } from "./user.server";
 
-export async function createConversation({ members }: { members: string[] }) {
-  await db.conversation.create({
+export async function createConversation({
+  members,
+  status,
+}: {
+  members: string[];
+  status: CHAT_ROOM_STATUS;
+}): Promise<Conversation> {
+  return await db.conversation.create({
     data: {
       userIds: members,
       type:
         members.length > 2
           ? CHAT_ROOM_TYPES.GROUP_CHAT
           : CHAT_ROOM_TYPES.NORMAL_CHAT,
+      status: status,
     },
   });
 }
@@ -25,6 +37,9 @@ export async function getConversations({ userId }: { userId: string }): Promise<
       userIds: {
         has: userId,
       },
+      Messages: {
+        some: {},
+      },
     },
     include: {
       Messages: true,
@@ -37,6 +52,7 @@ export async function getConversations({ userId }: { userId: string }): Promise<
           role: true,
           followers: true,
           following: true,
+          lastActiveAt: true,
         },
       },
     },
@@ -60,8 +76,6 @@ export async function isConversationAlreadyExist({
       },
     },
   });
-
-  console.log(conversation);
 
   if (conversation) {
     return true;
@@ -107,7 +121,39 @@ export async function getConversationById(conversationId: string): Promise<
           role: true,
           followers: true,
           following: true,
+          lastActiveAt: true,
         },
+      },
+    },
+  });
+}
+
+export async function deleteConversationById(
+  conversationId: string
+): Promise<void> {
+  await db.messages.deleteMany({
+    where: {
+      conversationId: conversationId,
+    },
+  });
+  await db.conversation.delete({
+    where: {
+      id: conversationId,
+    },
+  });
+}
+
+export async function getConversationByUserIds({
+  firstId,
+  secondId,
+}: {
+  firstId: string;
+  secondId: string;
+}): Promise<Conversation | null> {
+  return await db.conversation.findFirst({
+    where: {
+      userIds: {
+        hasEvery: [firstId, secondId],
       },
     },
   });

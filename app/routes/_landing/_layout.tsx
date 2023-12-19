@@ -66,7 +66,7 @@ export default function LandingRoute() {
               Chat
             </button>
           </NavLink>
-          <NavLink className="nav-link" to={"/friends"}>
+          <NavLink className="nav-link" to={"/users"}>
             <button className="active:scale-90 transition-all duration-300">
               Friends
             </button>

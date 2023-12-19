@@ -1,5 +1,5 @@
 import { cssBundleHref } from "@remix-run/css-bundle";
-import type { LinksFunction } from "@remix-run/node";
+import type { LinksFunction, LoaderFunctionArgs } from "@remix-run/node";
 import {
   Link,
   Links,
@@ -14,12 +14,26 @@ import {
 import style from "./styles/global.css";
 import preludeStyle from "./styles/prelude.css";
 import React from "react";
+import { getUserId, updateUser } from "./model/user.server";
 
 export const links: LinksFunction = () => [
   { rel: "stylesheet", href: style },
   { rel: "stylesheet", href: preludeStyle },
   ...(cssBundleHref ? [{ rel: "stylesheet", href: cssBundleHref }] : []),
 ];
+
+export async function loader({ request }: LoaderFunctionArgs): Promise<null> {
+  const userId = await getUserId(request);
+
+  if (userId !== null) {
+    updateUser({
+      userId: userId,
+      lastActiveAt: new Date(),
+    });
+  }
+
+  return null;
+}
 
 export default function App(): React.JSX.Element {
   return (

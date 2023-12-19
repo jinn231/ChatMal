@@ -11,6 +11,10 @@ import { createReadableStreamFromReadable } from "@remix-run/node";
 import { RemixServer } from "@remix-run/react";
 import isbot from "isbot";
 import { renderToPipeableStream } from "react-dom/server";
+import relativeTime from "dayjs/plugin/relativeTime.js";
+import dayjs from "dayjs";
+
+dayjs.extend(relativeTime);
 
 const ABORT_DELAY = 5_000;
 

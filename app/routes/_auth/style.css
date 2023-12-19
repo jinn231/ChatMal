@@ -37,13 +37,25 @@
   /* align-items: center; */
 }
 
-.error{
+.error {
   padding: 1rem;
   color: white;
   background: var(--error-color);
-  border-radius: .3rem;
+  border-radius: 0.3rem;
 }
 
-.password-input{
+.password-input {
   border: none;
+}
+
+@media (max-width: 1030px) {
+  .container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 30%;
+  }
+  .sec-page {
+    display: none;
+  }
 }

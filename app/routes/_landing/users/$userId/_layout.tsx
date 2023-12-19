@@ -1,5 +1,5 @@
 import { LoaderFunctionArgs, TypedResponse } from "@remix-run/node";
-import { Link, useLoaderData } from "@remix-run/react";
+import { Link, useFetcher, useLoaderData } from "@remix-run/react";
 import { json, redirect } from "react-router-dom";
 import LeftArrowIcon from "~/components/icons/LeftArrowIcon";
 import MessageIcon from "~/components/icons/MessageIcon";
@@ -16,13 +16,13 @@ export async function loader({ request, params }: LoaderFunctionArgs): Promise<
   const { userId } = params;
 
   if (!userId) {
-    throw redirect("/friends");
+    throw redirect("/users");
   }
 
   const user = await getUserById(userId);
 
   if (!user) {
-    throw redirect("/friends");
+    throw redirect("/users");
   }
 
   return json({
@@ -32,6 +32,7 @@ export async function loader({ request, params }: LoaderFunctionArgs): Promise<
 
 export default function UsersProfileLayout() {
   const { user } = useLoaderData<typeof loader>();
+  const fetcher = useFetcher();
 
   return (
     <main className="w-full p-5">
@@ -46,9 +47,16 @@ export default function UsersProfileLayout() {
         />
         <div className="flex gap-2 items-center">
           <h2 className="text-xl font-medium text-center">@ {user.name}</h2>
-          <Link to={`/chat/${user.id}`}>
+          <button
+            onClick={() =>
+              fetcher.submit(
+                { requestUserId: user.id },
+                { method: "POST", action: "/users/redirect-chat/" }
+              )
+            }
+          >
             <MessageIcon />
-          </Link>
+          </button>
         </div>
       </div>
       <div className="w-full border my-1"></div>

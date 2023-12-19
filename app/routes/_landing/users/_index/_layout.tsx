@@ -1,6 +1,7 @@
 import {
   ActionFunctionArgs,
   json,
+  SerializeFrom,
   type LinksFunction,
   type LoaderFunctionArgs,
   type TypedResponse,
@@ -30,6 +31,7 @@ import {
   createConversation,
   isConversationAlreadyExist,
 } from "~/model/conversation.server";
+import { CHAT_ROOM_STATUS } from "@prisma/client";
 
 export const links: LinksFunction = () => [{ rel: "stylesheet", href: styles }];
 
@@ -90,6 +92,7 @@ export async function action({
     ) {
       await createConversation({
         members: [id, userId],
+        status: CHAT_ROOM_STATUS.NORMAL,
       });
     }
     await follow({
@@ -197,7 +200,7 @@ export default function FriendRoute() {
   );
 }
 
-function NewFriends({ user }: { user: UserInfo }): JSX.Element {
+function NewFriends({ user }: { user: SerializeFrom<UserInfo> }): JSX.Element {
   const fetcher = useFetcher();
 
   if (fetcher.state === "submitting" || fetcher.state === "loading") {
@@ -212,7 +215,7 @@ function NewFriends({ user }: { user: UserInfo }): JSX.Element {
         alt="profile"
       />
       <div className="flex flex-col gap-1">
-        <Link to={`/friends/${user.id}`}>
+        <Link to={`/users/${user.id}`}>
           <p className="underline">{user.name}</p>
         </Link>
         <div className="flex gap-1">
@@ -229,7 +232,7 @@ function NewFriends({ user }: { user: UserInfo }): JSX.Element {
   );
 }
 
-function Following({ user }: { user: UserInfo }): JSX.Element {
+function Following({ user }: { user: SerializeFrom<UserInfo> }): JSX.Element {
   const fetcher = useFetcher();
 
   if (fetcher.state === "submitting" || fetcher.state === "loading") {
@@ -244,7 +247,7 @@ function Following({ user }: { user: UserInfo }): JSX.Element {
         alt="profile"
       />
       <div className="flex flex-col gap-1">
-        <Link to={`/friends/${user.id}`}>
+        <Link to={`/users/${user.id}`}>
           <p className="underline">{user.name}</p>
         </Link>
         <div className="flex gap-1">
@@ -265,8 +268,8 @@ function Follower({
   user,
   following,
 }: {
-  user: UserInfo;
-  following: UserInfo[];
+  user: SerializeFrom<UserInfo>;
+  following: SerializeFrom<UserInfo>[];
 }): JSX.Element {
   const fetcher = useFetcher();
   const userExists = following.find((item) => item.id === user.id);
@@ -283,10 +286,10 @@ function Follower({
         alt="profile"
       />
       <div>
-        <Link to={`/friends/${user.id}`}>
+        <Link to={`/users/${user.id}`}>
           <p className="underline">{user.name}</p>
         </Link>
-        {!userExists && (
+        {!userExists ? (
           <fetcher.Form method="POST">
             <input type="hidden" name="type" value={"follow"} />
             <input type="hidden" name="userId" value={user.id} />
@@ -294,6 +297,10 @@ function Follower({
               <small className="text-black">Follow Back</small>
             </button>
           </fetcher.Form>
+        ) : (
+          <p className="bg-[var(--highlight-color)] px-1 font-semibold text-center flex items-center rounded-[.2rem]">
+            <small className="text-silver">Followed</small>
+          </p>
         )}
       </div>
     </div>

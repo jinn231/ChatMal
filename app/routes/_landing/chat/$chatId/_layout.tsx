@@ -162,9 +162,26 @@ export default function ChatSessionRoute() {
                 {user.id !== currentUser.id && user.name}
               </strong>
             ))}
-            <strong></strong>
           </p>
-          <small>Active now</small>
+
+          {conversation.users.map((user) => {
+            if (user.id !== currentUser.id) {
+              const lastActiveTime = dayjs(user.lastActiveAt);
+              const currentTime = dayjs();
+              const timeDifference = currentTime.diff(
+                lastActiveTime,
+                "minutes"
+              );
+
+              return (
+                <small>
+                  {timeDifference <= 3
+                    ? "Active now"
+                    : `Active ${lastActiveTime.fromNow()}`}
+                </small>
+              );
+            }
+          })}
         </div>
       </nav>
 
