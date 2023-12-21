@@ -46,6 +46,7 @@
 
 .password-input {
   border: none;
+  max-width: 270px;
 }
 
 @media (max-width: 1030px) {

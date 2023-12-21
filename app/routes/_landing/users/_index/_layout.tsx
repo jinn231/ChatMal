@@ -7,7 +7,7 @@ import {
   type TypedResponse,
 } from "@remix-run/node";
 import styles from "./style.css";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { authenticate } from "~/model/auth.server";
 import type { UserInfo } from "~/model/user.server";
 import {
@@ -32,6 +32,7 @@ import {
   isConversationAlreadyExist,
 } from "~/model/conversation.server";
 import { CHAT_ROOM_STATUS } from "@prisma/client";
+import UsernameTag from "~/components/UsernameTag";
 
 export const links: LinksFunction = () => [{ rel: "stylesheet", href: styles }];
 
@@ -53,7 +54,7 @@ export async function action({
 }: ActionFunctionArgs): Promise<
   TypedResponse<Result<null, FormError<FriendRequestForm, string>>>
 > {
-  const { id, following } = await authenticate(request, (userId) =>
+  const { id, following, followers } = await authenticate(request, (userId) =>
     getUserById(userId)
   );
 
@@ -92,9 +93,12 @@ export async function action({
     ) {
       await createConversation({
         members: [id, userId],
-        status: CHAT_ROOM_STATUS.NORMAL,
+        status: followers.includes(userId)
+          ? CHAT_ROOM_STATUS.NORMAL
+          : CHAT_ROOM_STATUS.REQUEST,
       });
     }
+
     await follow({
       id: userId,
       followerId: id,
@@ -142,9 +146,23 @@ export async function loader({ request }: LoaderFunctionArgs): Promise<
 
 export default function FriendRoute() {
   const [filterFriend, setFilterFriendType] = useState<
-    "friends" | "following" | "followers"
-  >("friends");
+    "friends" | "following" | "followers" | string
+  >();
   const { friends, followers, following } = useLoaderData<typeof loader>();
+
+  useEffect(() => {
+    if (
+      localStorage.getItem("user-filter-type") === "followers" ||
+      localStorage.getItem("user-filter-type") === "following" ||
+      localStorage.getItem("user-filter-type") === "friends"
+    ) {
+      setFilterFriendType(
+        localStorage.getItem("user-filter-type") ?? "friends"
+      );
+    } else {
+      setFilterFriendType("friends");
+    }
+  }, []);
 
   return (
     <main className="w-full">
@@ -154,7 +172,10 @@ export default function FriendRoute() {
             className={`button  ${
               filterFriend === "friends" ? "selected" : "btn"
             }`}
-            onClick={() => setFilterFriendType("friends")}
+            onClick={() => {
+              localStorage.setItem("user-filter-type", "friends");
+              setFilterFriendType("friends");
+            }}
           >
             <p>Friends</p>
           </button>
@@ -162,7 +183,10 @@ export default function FriendRoute() {
             className={`button  ${
               filterFriend === "followers" ? "selected" : "btn"
             }`}
-            onClick={() => setFilterFriendType("followers")}
+            onClick={() => {
+              localStorage.setItem("user-filter-type", "followers");
+              setFilterFriendType("followers");
+            }}
           >
             <p>Followers</p>
           </button>
@@ -170,7 +194,10 @@ export default function FriendRoute() {
             className={`button ${
               filterFriend === "following" ? "selected" : "btn"
             }`}
-            onClick={() => setFilterFriendType("following")}
+            onClick={() => {
+              localStorage.setItem("user-filter-type", "following");
+              setFilterFriendType("following");
+            }}
           >
             <p>Following</p>
           </button>
@@ -180,20 +207,36 @@ export default function FriendRoute() {
       <div className="border-t border-t-white flex flex-col p-2">
         {filterFriend === "friends" ? (
           <>
-            {friends.map((friend) => (
-              <NewFriends key={friend.id} user={friend} />
-            ))}
+            {friends.length === 0 ? (
+              <>
+                <h2>No friend to show</h2>
+              </>
+            ) : (
+              friends.map((friend) => (
+                <NewFriends key={friend.id} user={friend} />
+              ))
+            )}
           </>
         ) : filterFriend === "following" ? (
           <>
-            {following.map((friend) => (
-              <Following user={friend} />
-            ))}
+            {following.length === 0 ? (
+              <>
+                <h2>You don't follow anyone</h2>
+              </>
+            ) : (
+              following.map((friend) => <Following user={friend} />)
+            )}
           </>
         ) : filterFriend === "followers" ? (
-          followers.map((user) => (
-            <Follower user={user} following={following} />
-          ))
+          followers.length === 0 ? (
+            <>
+              <h2>You have no follower</h2>
+            </>
+          ) : (
+            followers.map((user) => (
+              <Follower user={user} following={following} />
+            ))
+          )
         ) : null}
       </div>
     </main>
@@ -215,9 +258,7 @@ function NewFriends({ user }: { user: SerializeFrom<UserInfo> }): JSX.Element {
         alt="profile"
       />
       <div className="flex flex-col gap-1">
-        <Link to={`/users/${user.id}`}>
-          <p className="underline">{user.name}</p>
-        </Link>
+        <UsernameTag name={user.name} id={user.id} />
         <div className="flex gap-1">
           <fetcher.Form method="POST">
             <input type="hidden" name="type" value={"follow"} />

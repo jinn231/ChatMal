@@ -1,0 +1,28 @@
+.btn-group {
+  display: flex;
+  gap: 0.5rem;
+  background: var(--primary-color);
+  padding: 0.2rem;
+  border-radius: 0.3rem;
+}
+
+.btn-group > .btn {
+  background: var(--primary-color);
+  padding: 0.5rem;
+  border-radius: 0.3rem;
+}
+
+.btn > p {
+  color: lightblue;
+}
+
+.selected {
+  background: black;
+  color: white;
+  padding: 0.5rem;
+  border-radius: 0.4rem;
+}
+
+.selected > p {
+  color: white;
+}

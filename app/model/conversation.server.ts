@@ -37,6 +37,48 @@ export async function getConversations({ userId }: { userId: string }): Promise<
       userIds: {
         has: userId,
       },
+      status: CHAT_ROOM_STATUS.NORMAL,
+      Messages: {
+        some: {},
+      },
+    },
+    include: {
+      Messages: true,
+      users: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          passwordHash: false,
+          role: true,
+          followers: true,
+          following: true,
+          lastActiveAt: true,
+        },
+      },
+    },
+    orderBy: {
+      updatedAt: "desc",
+    },
+  });
+}
+
+export async function getRequestedConversations({
+  userId,
+}: {
+  userId: string;
+}): Promise<
+  (Conversation & {
+    Messages: Messages[];
+    users: UserInfo[];
+  })[]
+> {
+  return await db.conversation.findMany({
+    where: {
+      userIds: {
+        has: userId,
+      },
+      status: CHAT_ROOM_STATUS.REQUEST,
       Messages: {
         some: {},
       },

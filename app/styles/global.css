@@ -3,27 +3,27 @@
 @tailwind utilities;
 
 @font-face {
-  font-family: mulish ;
-  src: url("/public/fonts/Mulish-SemiBold.ttf");
+  font-family: poppins;
+  src: url("./../../public/fonts/Poppins-Light.ttf");
 }
 
 :root {
   --background-color: #000000;
-  --primary-color: rgb(38, 38, 255);
+  --primary-color: rgb(10, 133, 20);
   --secondary-color: #fafafa;
   --highlight-color: rgb(17, 94, 17);
   --error-color: #eb1919;
 }
 
-*{
-  font-family: mulish, sans-serif;
+* {
+  font-family: poppins, sans-serif;
 }
 
 body {
   background: var(--background-color);
 }
 
-.error-boundary{
+.error-boundary {
   background: #000000;
 }
 
@@ -49,8 +49,7 @@ body {
   }
 }
 
-
-.error-page-container{
+.error-page-container {
   display: flex;
   justify-content: center;
   align-items: center;

@@ -1,6 +1,7 @@
-import { Conversation, Messages } from "@prisma/client";
+import { CHAT_ROOM_STATUS, Conversation, Messages } from "@prisma/client";
 import {
   ActionFunctionArgs,
+  LinksFunction,
   LoaderFunctionArgs,
   SerializeFrom,
   TypedResponse,
@@ -8,7 +9,7 @@ import {
 } from "@remix-run/node";
 import { Form, Link, useFetcher, useLoaderData } from "@remix-run/react";
 import dayjs from "dayjs";
-import { ForwardedRef, useRef } from "react";
+import { ForwardedRef, useEffect, useRef, useState } from "react";
 import { z } from "zod";
 import Dialog from "~/components/Dialog";
 import BlockIcon from "~/components/icons/BlockIcon";
@@ -17,10 +18,12 @@ import { authenticate } from "~/model/auth.server";
 import {
   deleteConversationById,
   getConversations,
+  getRequestedConversations,
 } from "~/model/conversation.server";
 import { UserInfo, getUserById } from "~/model/user.server";
 import { FormError } from "~/utils/error.server";
 import { Result } from "~/utils/result.server";
+import styles from "./style.css";
 
 type ConversationForm = z.infer<typeof ConversationFormSchema>;
 
@@ -31,10 +34,16 @@ const ConversationFormSchema = z.discriminatedUnion("type", [
   }),
 ]);
 
+export const links: LinksFunction = () => [{ rel: "stylesheet", href: styles }];
+
 export async function loader({ request }: LoaderFunctionArgs): Promise<
   TypedResponse<{
     currentUser: UserInfo;
-    conversations: (Conversation & {
+    normalConversations: (Conversation & {
+      Messages: Messages[];
+      users: UserInfo[];
+    })[];
+    requestConversations: (Conversation & {
       Messages: Messages[];
       users: UserInfo[];
     })[];
@@ -46,9 +55,14 @@ export async function loader({ request }: LoaderFunctionArgs): Promise<
     userId: user.id,
   });
 
+  const requestedConversations = await getRequestedConversations({
+    userId: user.id,
+  });
+
   return json({
     currentUser: user,
-    conversations: conversation,
+    normalConversations: conversation,
+    requestConversations: requestedConversations,
   });
 }
 
@@ -82,15 +96,69 @@ export async function action({
 }
 
 export default function ChatRoute() {
-  const { conversations, currentUser } = useLoaderData<typeof loader>();
+  const { normalConversations, currentUser, requestConversations } =
+    useLoaderData<typeof loader>();
+  const [messageType, setMessageType] = useState<CHAT_ROOM_STATUS>();
+
+  useEffect(() => {
+    if (
+      localStorage.getItem("message-filter-type") === CHAT_ROOM_STATUS.REQUEST
+    ) {
+      setMessageType("REQUEST");
+    } else {
+      setMessageType("NORMAL");
+    }
+  }, []);
 
   return (
     <div className="w-full h-full overflow-auto">
-      <h1 className="p-5 text-2xl">Chat Mal</h1>
+      <div className="px-5 py-3 flex justify-between items-center">
+        <h1 className="text-2xl">Chat Mal</h1>
+
+        <div className="btn-group m-2">
+          <button
+            className={`button  ${
+              messageType === CHAT_ROOM_STATUS.NORMAL ? "selected" : "btn"
+            }`}
+            onClick={() => {
+              localStorage.setItem(
+                "message-filter-type",
+                CHAT_ROOM_STATUS.NORMAL
+              );
+              setMessageType(CHAT_ROOM_STATUS.NORMAL);
+            }}
+          >
+            <p>Normal</p>
+          </button>
+          <button
+            className={`button  ${
+              messageType === CHAT_ROOM_STATUS.REQUEST ? "selected" : "btn"
+            }`}
+            onClick={() => {
+              localStorage.setItem(
+                "message-filter-type",
+                CHAT_ROOM_STATUS.REQUEST
+              );
+              setMessageType(CHAT_ROOM_STATUS.REQUEST);
+            }}
+          >
+            <p>Request Messages</p>
+          </button>
+        </div>
+      </div>
       <div className="w-[90%] mx-auto flex flex-col gap-3">
-        {conversations.length !== 0 ? (
-          conversations.map((conversation) => (
+        {messageType === "NORMAL" && normalConversations.length !== 0 ? (
+          normalConversations.map((conversation) => (
             <ContactUser
+              key={conversation.id}
+              conversation={conversation}
+              currentUser={currentUser}
+            />
+          ))
+        ) : messageType === "REQUEST" && requestConversations.length !== 0 ? (
+          requestConversations.map((conversation) => (
+            <ContactUser
+              key={conversation.id}
               conversation={conversation}
               currentUser={currentUser}
             />
@@ -98,7 +166,7 @@ export default function ChatRoute() {
         ) : (
           <div className="text-center my-2">
             <h2 className="text-2xl">You don't have any conversation yet !</h2>
-            <p className="text-md font-semibold">
+            <p className="text-md font-semibold my-3">
               Find new friends and chat with them{" "}
               <Link to={"/users"} className="underline">
                 <span className="text-[#43ff3d]">Go To Friends</span>

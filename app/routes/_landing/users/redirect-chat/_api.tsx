@@ -42,7 +42,7 @@ export async function action({
       members: [id, requestUserId],
       status: isUsersFollowed
         ? CHAT_ROOM_STATUS.NORMAL
-        : CHAT_ROOM_STATUS.PENDING,
+        : CHAT_ROOM_STATUS.REQUEST,
     });
 
     throw redirect(`/chat/${createdConversation.id}`);

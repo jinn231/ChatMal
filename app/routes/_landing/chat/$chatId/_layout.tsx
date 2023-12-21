@@ -5,21 +5,23 @@ import {
   TypedResponse,
   ActionFunctionArgs,
   SerializeFrom,
+  LoaderFunctionArgs,
 } from "@remix-run/node";
 import SendIcon from "~/components/icons/SendIcon";
 import styles from "./style.css";
 import LeftArrowIcon from "~/components/icons/LeftArrowIcon";
 import { authenticate } from "~/model/auth.server";
 import { UserInfo, getUserById } from "~/model/user.server";
-import { LoaderFunctionArgs } from "react-router-dom";
 import { getConversationById } from "~/model/conversation.server";
 import { Conversation, Messages } from "@prisma/client";
 import {
   Form,
+  Link,
   useActionData,
   useFetcher,
   useLoaderData,
   useRevalidator,
+  useSubmit,
 } from "@remix-run/react";
 import { z } from "zod";
 import { Result } from "~/utils/result.server";
@@ -127,6 +129,7 @@ export default function ChatSessionRoute() {
   const messageRef = useRef<HTMLDivElement>(null);
   const [showTypingIcon, setShowTypingIcon] = useState<boolean>(false);
   const fetcher = useFetcher();
+  const submit = useSubmit();
 
   useEffect(() => {
     messageRef.current?.scrollTo(0, Number(messageRef.current?.scrollHeight));
@@ -158,9 +161,13 @@ export default function ChatSessionRoute() {
         <div>
           <p>
             {conversation.users.map((user) => (
-              <strong key={user.id}>
-                {user.id !== currentUser.id && user.name}
-              </strong>
+              <>
+                {user.id !== currentUser.id && (
+                  <Link to={`/users/${user.id}`}>
+                    <strong key={user.id}>{user.name}</strong>
+                  </Link>
+                )}
+              </>
             ))}
           </p>
 
@@ -174,7 +181,7 @@ export default function ChatSessionRoute() {
               );
 
               return (
-                <small>
+                <small key={timeDifference.toString()}>
                   {timeDifference <= 3
                     ? "Active now"
                     : `Active ${lastActiveTime.fromNow()}`}
@@ -191,8 +198,45 @@ export default function ChatSessionRoute() {
       >
         {conversation.Messages.length === 0 ? (
           <div className="flex-1 flex flex-col justify-center items-center gap-5">
-            <button>
-              <h1 className="text-2xl">
+            <button
+              onClick={() =>
+                fetcher.submit(
+                  {
+                    type: "send",
+                    senderId: currentUser.id,
+                    receiverId: conversation.users.filter(
+                      (user) => user.id !== currentUser.id
+                    )[0].id,
+                    message: "Hi",
+                    conversationId: conversation.id,
+                  },
+                  {
+                    method: "POST",
+                    action: `/chat/${conversation.id}`,
+                  }
+                )
+              }
+            >
+              <h1
+                className="text-2xl"
+                onClick={() =>
+                  fetcher.submit(
+                    {
+                      type: "send",
+                      senderId: currentUser.id,
+                      receiverId: conversation.users.filter(
+                        (user) => user.id !== currentUser.id
+                      )[0].id,
+                      message: "Hi",
+                      conversationId: conversation.id,
+                    },
+                    {
+                      method: "POST",
+                      action: `/chat/${conversation.id}`,
+                    }
+                  )
+                }
+              >
                 Say "Hi" to{" "}
                 {
                   conversation.users.filter(
@@ -211,9 +255,9 @@ export default function ChatSessionRoute() {
             {conversation.Messages.map((message) => (
               <>
                 {message.senderId === currentUser.id ? (
-                  <SenderMessage message={message} />
+                  <SenderMessage key={message.id} message={message} />
                 ) : (
-                  <ReceiverMessage message={message} />
+                  <ReceiverMessage key={message.id} message={message} />
                 )}
               </>
             ))}

@@ -11,7 +11,7 @@ datasource db {
 }
 
 enum CHAT_ROOM_STATUS {
-  PENDING
+  REQUEST
   NORMAL
 }
 
