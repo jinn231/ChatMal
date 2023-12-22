@@ -39,11 +39,18 @@ model User {
   conversationIds String[]       @db.ObjectId
   Conversation    Conversation[] @relation(fields: [conversationIds], references: [id])
 
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
   followers String[]
   following String[]
-  Messages  Messages[]
+
+  Messages   Messages[]
+  messagesId String?    @db.ObjectId
+
+  DeleteForUserIds DeleteForUserIds[]
+
+  seenMessageIds String[]   @db.ObjectId
+  seenMessages   Messages[] @relation("Seen", fields: [seenMessageIds], references: [id])
 }
 
 model SessionToken {
@@ -56,24 +63,35 @@ model SessionToken {
 }
 
 model Conversation {
-  id        String           @id @default(auto()) @map("_id") @db.ObjectId
-  type      CHAT_ROOM_TYPES
-  status    CHAT_ROOM_STATUS
-  userIds   String[]         @db.ObjectId
-  users     User[]           @relation(fields: [userIds], references: [id])
-  createdAt DateTime         @default(now())
-  updatedAt DateTime         @updatedAt
-  Messages  Messages[]
+  id            String           @id @default(auto()) @map("_id") @db.ObjectId
+  type          CHAT_ROOM_TYPES
+  status        CHAT_ROOM_STATUS
+  userIds       String[]         @db.ObjectId
+  users         User[]           @relation(fields: [userIds], references: [id])
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+  lastMessageAt DateTime?        @default(now())
+  Messages      Messages[]
 }
 
 model Messages {
-  id             String       @id @default(auto()) @map("_id") @db.ObjectId
-  conversationId String       @db.ObjectId
-  conversation   Conversation @relation(fields: [conversationId], references: [id])
+  id             String             @id @default(auto()) @map("_id") @db.ObjectId
+  conversationId String             @db.ObjectId
+  conversation   Conversation       @relation(fields: [conversationId], references: [id])
   message        String
-  seen           Boolean?
-  senderId       String       @db.ObjectId
-  sender         User         @relation(fields: [senderId], references: [id])
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
+  seenIds        String[]           @db.ObjectId()
+  seen           User[]             @relation("Seen", fields: [seenIds], references: [id])
+  senderId       String             @db.ObjectId
+  sender         User               @relation(fields: [senderId], references: [id])
+  deleteFor      DeleteForUserIds[]
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+}
+
+model DeleteForUserIds {
+  id         String    @id @default(auto()) @map("_id") @db.ObjectId
+  userId     String    @db.ObjectId
+  user       User      @relation(fields: [userId], references: [id])
+  messagesId String?   @db.ObjectId
+  Messages   Messages? @relation(fields: [messagesId], references: [id])
 }

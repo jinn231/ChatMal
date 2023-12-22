@@ -2,14 +2,15 @@ import {
   CHAT_ROOM_STATUS,
   CHAT_ROOM_TYPES,
   Conversation,
-  Messages,
+  DeleteForUserIds,
+  Messages
 } from "@prisma/client";
 import { db } from "~/utils/db.server";
 import { UserInfo } from "./user.server";
 
 export async function createConversation({
   members,
-  status,
+  status
 }: {
   members: string[];
   status: CHAT_ROOM_STATUS;
@@ -21,29 +22,46 @@ export async function createConversation({
         members.length > 2
           ? CHAT_ROOM_TYPES.GROUP_CHAT
           : CHAT_ROOM_TYPES.NORMAL_CHAT,
-      status: status,
-    },
+      status: status
+    }
   });
 }
 
 export async function getConversations({ userId }: { userId: string }): Promise<
   (Conversation & {
-    Messages: Messages[];
+    Messages: (Messages & { sender: { name: string } })[];
     users: UserInfo[];
   })[]
 > {
   return await db.conversation.findMany({
     where: {
       userIds: {
-        has: userId,
+        has: userId
       },
       status: CHAT_ROOM_STATUS.NORMAL,
       Messages: {
-        some: {},
-      },
+        some: {}
+      }
     },
     include: {
-      Messages: true,
+      Messages: {
+        select: {
+          id: true,
+          conversation: false,
+          conversationId: true,
+          message: true,
+          seen: true,
+          seenIds: true,
+          sender: {
+            select: {
+              name: true
+            }
+          },
+          senderId: true,
+          createdAt: true,
+          updatedAt: true
+        }
+      },
       users: {
         select: {
           id: true,
@@ -54,37 +72,56 @@ export async function getConversations({ userId }: { userId: string }): Promise<
           followers: true,
           following: true,
           lastActiveAt: true,
-        },
-      },
+          createdAt: true,
+          updatedAt: true
+        }
+      }
     },
     orderBy: {
-      updatedAt: "desc",
-    },
+      updatedAt: "asc"
+    }
   });
 }
 
 export async function getRequestedConversations({
-  userId,
+  userId
 }: {
   userId: string;
 }): Promise<
   (Conversation & {
-    Messages: Messages[];
+    Messages: (Messages & { sender: { name: string } })[];
     users: UserInfo[];
   })[]
 > {
   return await db.conversation.findMany({
     where: {
       userIds: {
-        has: userId,
+        has: userId
       },
       status: CHAT_ROOM_STATUS.REQUEST,
       Messages: {
-        some: {},
-      },
+        some: {}
+      }
     },
     include: {
-      Messages: true,
+      Messages: {
+        select: {
+          id: true,
+          conversation: false,
+          conversationId: true,
+          message: true,
+          seen: true,
+          seenIds: true,
+          sender: {
+            select: {
+              name: true
+            }
+          },
+          senderId: true,
+          createdAt: true,
+          updatedAt: true
+        }
+      },
       users: {
         select: {
           id: true,
@@ -95,18 +132,20 @@ export async function getRequestedConversations({
           followers: true,
           following: true,
           lastActiveAt: true,
-        },
-      },
+          createdAt: true,
+          updatedAt: true
+        }
+      }
     },
     orderBy: {
-      updatedAt: "desc",
-    },
+      updatedAt: "desc"
+    }
   });
 }
 
 export async function isConversationAlreadyExist({
   currentUserId,
-  userId,
+  userId
 }: {
   currentUserId: string;
   userId: string;
@@ -114,9 +153,9 @@ export async function isConversationAlreadyExist({
   const conversation = await db.conversation.findFirst({
     where: {
       userIds: {
-        hasEvery: [currentUserId, userId],
-      },
-    },
+        hasEvery: [currentUserId, userId]
+      }
+    }
   });
 
   if (conversation) {
@@ -128,14 +167,16 @@ export async function isConversationAlreadyExist({
 
 export async function getConversationById(conversationId: string): Promise<
   | (Conversation & {
-      Messages: (Messages & { sender: { name: string } })[];
+      Messages: (Messages & { deleteFor: DeleteForUserIds[] } & {
+        sender: { name: string };
+      })[];
       users: UserInfo[];
     })
   | null
 > {
   return await db.conversation.findUnique({
     where: {
-      id: conversationId,
+      id: conversationId
     },
     include: {
       Messages: {
@@ -144,15 +185,17 @@ export async function getConversationById(conversationId: string): Promise<
           conversationId: true,
           message: true,
           seen: true,
+          seenIds: true,
           senderId: true,
           sender: {
             select: {
-              name: true,
-            },
+              name: true
+            }
           },
+          deleteFor: true,
           createdAt: true,
-          updatedAt: true,
-        },
+          updatedAt: true
+        }
       },
       users: {
         select: {
@@ -164,9 +207,11 @@ export async function getConversationById(conversationId: string): Promise<
           followers: true,
           following: true,
           lastActiveAt: true,
-        },
-      },
-    },
+          createdAt: true,
+          updatedAt: true
+        }
+      }
+    }
   });
 }
 
@@ -175,19 +220,19 @@ export async function deleteConversationById(
 ): Promise<void> {
   await db.messages.deleteMany({
     where: {
-      conversationId: conversationId,
-    },
+      conversationId: conversationId
+    }
   });
   await db.conversation.delete({
     where: {
-      id: conversationId,
-    },
+      id: conversationId
+    }
   });
 }
 
 export async function getConversationByUserIds({
   firstId,
-  secondId,
+  secondId
 }: {
   firstId: string;
   secondId: string;
@@ -195,8 +240,25 @@ export async function getConversationByUserIds({
   return await db.conversation.findFirst({
     where: {
       userIds: {
-        hasEvery: [firstId, secondId],
-      },
+        hasEvery: [firstId, secondId]
+      }
+    }
+  });
+}
+
+export async function updateConversation({
+  conversationId,
+  status
+}: {
+  conversationId: string;
+  status: CHAT_ROOM_STATUS;
+}) {
+  await db.conversation.update({
+    where: {
+      id: conversationId
     },
+    data: {
+      status: status
+    }
   });
 }

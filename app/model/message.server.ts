@@ -17,3 +17,50 @@ export async function createMessage({
     },
   });
 }
+
+export async function deleteMessage({
+  messageId,
+  userId,
+}: {
+  messageId: string;
+  userId: string;
+}) {
+  await db.messages.update({
+    where: {
+      id: messageId,
+    },
+    data: {
+      deleteFor: {
+        create: {
+          userId: userId,
+        },
+      },
+    },
+  });
+}
+
+export async function updateMessage({
+  messageId,
+  message,
+  seenId,
+}: {
+  messageId: string;
+  message?: string;
+  seenId?: string;
+}) {
+  await db.messages.update({
+    where: {
+      id: messageId,
+    },
+    include: {
+      seen: true,
+    },
+    data: {
+      seen: {
+        connect: {
+          id: seenId
+        }
+      }
+    },
+  });
+}

@@ -15,6 +15,7 @@ import {
   getAllFriends,
   getUserById,
   getUserByList,
+  isUserFollowEachOther,
   unfollow,
 } from "~/model/user.server";
 import {
@@ -29,7 +30,9 @@ import { Result } from "~/utils/result.server";
 import { FormError } from "~/utils/error.server";
 import {
   createConversation,
+  getConversationByUserIds,
   isConversationAlreadyExist,
+  updateConversation,
 } from "~/model/conversation.server";
 import { CHAT_ROOM_STATUS } from "@prisma/client";
 import UsernameTag from "~/components/UsernameTag";
@@ -85,11 +88,10 @@ export async function action({
       });
     }
 
+    const conversation = await getConversationByUserIds({ firstId: id, secondId: userId })
+
     if (
-      !(await isConversationAlreadyExist({
-        currentUserId: id,
-        userId: userId,
-      }))
+      conversation === null
     ) {
       await createConversation({
         members: [id, userId],
@@ -97,6 +99,13 @@ export async function action({
           ? CHAT_ROOM_STATUS.NORMAL
           : CHAT_ROOM_STATUS.REQUEST,
       });
+    }
+
+    if (followers.includes(userId)) {
+      await updateConversation({
+        conversationId: conversation?.id || "",
+        status: CHAT_ROOM_STATUS.NORMAL
+      })
     }
 
     await follow({
@@ -169,9 +178,8 @@ export default function FriendRoute() {
       <div className="flex justify-end">
         <div className="btn-group m-2">
           <button
-            className={`button  ${
-              filterFriend === "friends" ? "selected" : "btn"
-            }`}
+            className={`button  ${filterFriend === "friends" ? "selected" : "btn"
+              }`}
             onClick={() => {
               localStorage.setItem("user-filter-type", "friends");
               setFilterFriendType("friends");
@@ -180,9 +188,8 @@ export default function FriendRoute() {
             <p>Friends</p>
           </button>
           <button
-            className={`button  ${
-              filterFriend === "followers" ? "selected" : "btn"
-            }`}
+            className={`button  ${filterFriend === "followers" ? "selected" : "btn"
+              }`}
             onClick={() => {
               localStorage.setItem("user-filter-type", "followers");
               setFilterFriendType("followers");
@@ -191,9 +198,8 @@ export default function FriendRoute() {
             <p>Followers</p>
           </button>
           <button
-            className={`button ${
-              filterFriend === "following" ? "selected" : "btn"
-            }`}
+            className={`button ${filterFriend === "following" ? "selected" : "btn"
+              }`}
             onClick={() => {
               localStorage.setItem("user-filter-type", "following");
               setFilterFriendType("following");

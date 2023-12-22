@@ -40,11 +40,11 @@ export async function loader({ request }: LoaderFunctionArgs): Promise<
   TypedResponse<{
     currentUser: UserInfo;
     normalConversations: (Conversation & {
-      Messages: Messages[];
+      Messages: (Messages & { sender: { name: string } })[];
       users: UserInfo[];
     })[];
     requestConversations: (Conversation & {
-      Messages: Messages[];
+      Messages: (Messages & { sender: { name: string } })[];
       users: UserInfo[];
     })[];
   }>
@@ -185,7 +185,7 @@ function ContactUser({
 }: {
   conversation: SerializeFrom<
     Conversation & {
-      Messages: Messages[];
+      Messages: (Messages & { sender: { name: string } })[];
       users: UserInfo[];
     }
   >;
@@ -211,32 +211,57 @@ function ContactUser({
             alt="profile"
           />
           <div>
-            <p>
-              {conversation.users.map((user) => (
-                <strong key={user.id}>
-                  {user.id !== currentUser.id && user.name}
-                </strong>
-              ))}
-            </p>
+            <div className="flex item-center gap-1">
+              <p>
+                {conversation.users.map((user) => (
+                  <strong key={user.id}>
+                    {user.id !== currentUser.id && user.name}
+                  </strong>
+                ))}
+              </p>
 
-            {conversation.users.map((user) => {
-              if (user.id !== currentUser.id) {
-                const lastActiveTime = dayjs(user.lastActiveAt);
-                const currentTime = dayjs();
-                const timeDifference = currentTime.diff(
-                  lastActiveTime,
-                  "minutes"
-                );
+              {conversation.users.map((user) => {
+                if (user.id !== currentUser.id) {
+                  const lastActiveTime = dayjs(user.lastActiveAt);
+                  const currentTime = dayjs();
+                  const timeDifference = currentTime.diff(
+                    lastActiveTime,
+                    "minutes"
+                  );
 
-                return (
-                  <small>
-                    {timeDifference <= 3
-                      ? "Active now"
-                      : `Active ${lastActiveTime.fromNow()}`}
-                  </small>
-                );
-              }
-            })}
+                  return (
+                    <p>
+                      <small className="font-[900] text-[12px] font-mono">
+                        {timeDifference <= 3
+                          ? "(Active now)"
+                          : `(Active ${lastActiveTime.fromNow()})`}
+                      </small>
+                    </p>
+                  );
+                }
+              })}
+            </div>
+
+            <strong className="font-[900] text-[12px] font-mono">
+              {conversation.Messages[conversation.Messages.length - 1]
+                .senderId === currentUser.id
+                ? "You : "
+                : `${
+                    conversation.Messages[conversation.Messages.length - 1]
+                      .sender.name
+                  } : `}
+            </strong>
+            <small
+              className={`font-mono ${
+                conversation.Messages[
+                  conversation.Messages.length - 1
+                ].seenIds.includes(currentUser.id)
+                  ? "font-normal text-gray-500"
+                  : "font-semibold"
+              }`}
+            >
+              {conversation.Messages[conversation.Messages.length - 1].message}
+            </small>
           </div>
         </div>
       </Link>

@@ -5,7 +5,14 @@ import { getSession } from "~/utils/session.server";
 
 export type UserInfo = Pick<
   User,
-  "id" | "email" | "name" | "followers" | "following" | "lastActiveAt"
+  | "id"
+  | "email"
+  | "name"
+  | "followers"
+  | "following"
+  | "lastActiveAt"
+  | "createdAt"
+  | "updatedAt"
 >;
 
 export async function getUserByEmail(email: string): Promise<UserInfo | null> {
