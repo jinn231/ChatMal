@@ -3,57 +3,57 @@ import { db } from "~/utils/db.server";
 export async function createMessage({
   conversationId,
   senderId,
-  message,
+  message
 }: {
   conversationId: string;
   senderId: string;
   message: string;
-}) {
+}): Promise<void> {
   await db.messages.create({
     data: {
       conversationId: conversationId,
       senderId: senderId,
-      message: message,
-    },
+      message: message
+    }
   });
 }
 
 export async function deleteMessage({
   messageId,
-  userId,
+  userId
 }: {
   messageId: string;
   userId: string;
-}) {
+}): Promise<void> {
   await db.messages.update({
     where: {
-      id: messageId,
+      id: messageId
     },
     data: {
       deleteFor: {
         create: {
-          userId: userId,
-        },
-      },
-    },
+          userId: userId
+        }
+      }
+    }
   });
 }
 
 export async function updateMessage({
   messageId,
   message,
-  seenId,
+  seenId
 }: {
   messageId: string;
   message?: string;
   seenId?: string;
-}) {
+}): Promise<void> {
   await db.messages.update({
     where: {
-      id: messageId,
+      id: messageId
     },
     include: {
-      seen: true,
+      seen: true
     },
     data: {
       seen: {
@@ -61,6 +61,6 @@ export async function updateMessage({
           id: seenId
         }
       }
-    },
+    }
   });
 }

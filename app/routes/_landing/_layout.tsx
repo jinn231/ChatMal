@@ -3,9 +3,17 @@ import {
   type LinksFunction,
   type MetaFunction,
   TypedResponse,
-  json,
+  json
 } from "@remix-run/node";
-import { Form, Link, NavLink, Outlet, isRouteErrorResponse, useLoaderData, useRouteError } from "@remix-run/react";
+import {
+  Form,
+  Link,
+  NavLink,
+  Outlet,
+  isRouteErrorResponse,
+  useLoaderData,
+  useRouteError
+} from "@remix-run/react";
 import styles from "./style.css";
 import HomeIcon from "~/components/icons/HomeIcon";
 import ChatIcon from "~/components/icons/ChatIcon";
@@ -15,7 +23,7 @@ import SettingIcon from "~/components/icons/SettingIcon";
 import LogoutIcon from "~/components/icons/LogoutIcon";
 import MobileSettingIcon from "~/components/icons/MobileSettingIcon";
 import { authenticate } from "~/model/auth.server";
-import type { UserInfo} from "~/model/user.server";
+import type { UserInfo } from "~/model/user.server";
 import { getUserById } from "~/model/user.server";
 
 export const links: LinksFunction = () => [{ rel: "stylesheet", href: styles }];
@@ -23,18 +31,17 @@ export const links: LinksFunction = () => [{ rel: "stylesheet", href: styles }];
 export const meta: MetaFunction = () => {
   return [
     { title: "New Remix App" },
-    { name: "description", content: "Welcome to Remix!" },
+    { name: "description", content: "Welcome to Remix!" }
   ];
 };
 
 export async function loader({
-  request,
+  request
 }: LoaderFunctionArgs): Promise<TypedResponse<UserInfo>> {
-  const user = await authenticate(request, (userId) => getUserById(userId));
+  const user = await authenticate(request, userId => getUserById(userId));
 
   return json(user);
 }
-
 
 export default function LandingRoute() {
   const { name } = useLoaderData<typeof loader>();

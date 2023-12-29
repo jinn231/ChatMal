@@ -1,7 +1,11 @@
 import { createSessionStorage } from "@remix-run/node";
 import crypto from "crypto";
 import dayjs from "dayjs";
-import { createSessionToken, deleteSessionToken, getSessionToken } from "./session-token.server";
+import {
+  createSessionToken,
+  deleteSessionToken,
+  getSessionToken
+} from "./session-token.server";
 
 const SESSION_SECRET: string = process.env.SESSION_SECRET || "";
 
@@ -17,7 +21,7 @@ export const { getSession, commitSession, destroySession } =
       sameSite: "lax",
       path: "/",
       maxAge: 60 * 60 * 24 * 30,
-      httpOnly: true,
+      httpOnly: true
     },
     createData: async (data, expiresAt) => {
       const sessionToken = crypto.randomBytes(32).toString("base64");
@@ -29,9 +33,9 @@ export const { getSession, commitSession, destroySession } =
       }
       return sessionToken;
     },
-    readData: async (sessionToken) => await getSessionToken(sessionToken),
+    readData: async sessionToken => await getSessionToken(sessionToken),
     updateData: async (_sessionToken, _data, _expiresAt) => {},
-    deleteData: async (sessionToken) => {
+    deleteData: async sessionToken => {
       await deleteSessionToken(sessionToken);
-    },
+    }
   });

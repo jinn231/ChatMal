@@ -8,5 +8,5 @@ export default {
   // serverBuildPath: "build/index.js",
   // publicPath: "/build/",
   serverDependenciesToBundle: ["remix-i18next", "accept-language-parser"],
-  routes: async (defineRoutes) => flatRoutes("routes", defineRoutes),
+  routes: async defineRoutes => flatRoutes("routes", defineRoutes)
 };

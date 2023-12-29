@@ -14,11 +14,11 @@ type SignUpForm = z.infer<typeof SignUpSchema>;
 const SignUpSchema = z.object({
   name: z.string().min(1, "Username is required"),
   email: z.string().trim().email("Email is not valid"),
-  password: z.string().min(8, "Password is too short"),
+  password: z.string().min(8, "Password is too short")
 });
 
 export async function action({
-  request,
+  request
 }: ActionFunctionArgs): Promise<TypedResponse<FormError<SignUpForm, string>>> {
   const fields = Object.fromEntries(await request.formData());
 
@@ -27,7 +27,7 @@ export async function action({
     return json({
       fields,
       errors: parseResult.error.format(),
-      message: "",
+      message: ""
     });
   }
 
@@ -36,7 +36,7 @@ export async function action({
   if (!registerResult?.ok) {
     return json({
       fields,
-      message: registerResult.error.message,
+      message: registerResult.error.message
     });
   }
 

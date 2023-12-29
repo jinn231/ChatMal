@@ -1,5 +1,5 @@
 import { cssBundleHref } from "@remix-run/css-bundle";
-import type { LinksFunction, LoaderFunctionArgs } from "@remix-run/node";
+import { type LinksFunction, type LoaderFunctionArgs } from "@remix-run/node";
 import {
   Link,
   Links,
@@ -9,17 +9,17 @@ import {
   Scripts,
   ScrollRestoration,
   isRouteErrorResponse,
-  useRouteError,
+  useRouteError
 } from "@remix-run/react";
-import style from "./styles/global.css";
-import preludeStyle from "./styles/prelude.css";
 import React from "react";
 import { getUserId, updateUser } from "./model/user.server";
+import style from "./styles/global.css";
+import preludeStyle from "./styles/prelude.css";
 
 export const links: LinksFunction = () => [
   { rel: "stylesheet", href: style },
   { rel: "stylesheet", href: preludeStyle },
-  ...(cssBundleHref ? [{ rel: "stylesheet", href: cssBundleHref }] : []),
+  ...(cssBundleHref ? [{ rel: "stylesheet", href: cssBundleHref }] : [])
 ];
 
 export async function loader({ request }: LoaderFunctionArgs): Promise<null> {
@@ -28,7 +28,7 @@ export async function loader({ request }: LoaderFunctionArgs): Promise<null> {
   if (userId !== null) {
     updateUser({
       userId: userId,
-      lastActiveAt: new Date(),
+      lastActiveAt: new Date()
     });
   }
 
@@ -73,7 +73,7 @@ export function ErrorBoundary(): React.JSX.Element {
 }
 
 function Document({
-  children,
+  children
 }: {
   children: React.JSX.Element;
 }): React.JSX.Element {

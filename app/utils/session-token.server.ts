@@ -1,6 +1,6 @@
+import { type SessionToken } from "@prisma/client";
 import crypto from "crypto";
 import { db } from "./db.server";
-import type { SessionToken } from "@prisma/client";
 
 export async function createSessionToken(
   token: string,
@@ -10,7 +10,7 @@ export async function createSessionToken(
   const tokenHash = crypto.createHash("sha256").update(token).digest("base64");
 
   await db.sessionToken.create({
-    data: { userId: userId, token: tokenHash, experiedAt: expiredAt },
+    data: { userId: userId, token: tokenHash, experiedAt: expiredAt }
   });
 }
 

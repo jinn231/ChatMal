@@ -1,15 +1,15 @@
 import { CHAT_ROOM_STATUS, Conversation, Messages } from "@prisma/client";
-import {
+import type {
   ActionFunctionArgs,
   LinksFunction,
   LoaderFunctionArgs,
   SerializeFrom,
-  TypedResponse,
-  json,
+  TypedResponse
 } from "@remix-run/node";
-import { Form, Link, useFetcher, useLoaderData } from "@remix-run/react";
+import { json } from "@remix-run/node";
+import { Link, useFetcher, useLoaderData } from "@remix-run/react";
 import dayjs from "dayjs";
-import { ForwardedRef, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { z } from "zod";
 import Dialog from "~/components/Dialog";
 import BlockIcon from "~/components/icons/BlockIcon";
@@ -18,7 +18,7 @@ import { authenticate } from "~/model/auth.server";
 import {
   deleteConversationById,
   getConversations,
-  getRequestedConversations,
+  getRequestedConversations
 } from "~/model/conversation.server";
 import { UserInfo, getUserById } from "~/model/user.server";
 import { FormError } from "~/utils/error.server";
@@ -30,8 +30,8 @@ type ConversationForm = z.infer<typeof ConversationFormSchema>;
 const ConversationFormSchema = z.discriminatedUnion("type", [
   z.object({
     type: z.literal("delete"),
-    conversationId: z.string(),
-  }),
+    conversationId: z.string()
+  })
 ]);
 
 export const links: LinksFunction = () => [{ rel: "stylesheet", href: styles }];
@@ -49,29 +49,29 @@ export async function loader({ request }: LoaderFunctionArgs): Promise<
     })[];
   }>
 > {
-  const user = await authenticate(request, (userId) => getUserById(userId));
+  const user = await authenticate(request, userId => getUserById(userId));
 
   const conversation = await getConversations({
-    userId: user.id,
+    userId: user.id
   });
 
   const requestedConversations = await getRequestedConversations({
-    userId: user.id,
+    userId: user.id
   });
 
   return json({
     currentUser: user,
     normalConversations: conversation,
-    requestConversations: requestedConversations,
+    requestConversations: requestedConversations
   });
 }
 
 export async function action({
-  request,
+  request
 }: ActionFunctionArgs): Promise<
   TypedResponse<Result<null, FormError<ConversationForm, string>>>
 > {
-  await authenticate(request, (userId) => getUserById(userId));
+  await authenticate(request, userId => getUserById(userId));
 
   const fields = Object.fromEntries(await request.formData());
 
@@ -82,8 +82,8 @@ export async function action({
       ok: false,
       error: {
         fields: fields,
-        errors: parsedResult.error.format(),
-      },
+        errors: parsedResult.error.format()
+      }
     });
   }
 
@@ -148,7 +148,7 @@ export default function ChatRoute() {
       </div>
       <div className="w-[90%] mx-auto flex flex-col gap-3">
         {messageType === "NORMAL" && normalConversations.length !== 0 ? (
-          normalConversations.map((conversation) => (
+          normalConversations.map(conversation => (
             <ContactUser
               key={conversation.id}
               conversation={conversation}
@@ -156,7 +156,7 @@ export default function ChatRoute() {
             />
           ))
         ) : messageType === "REQUEST" && requestConversations.length !== 0 ? (
-          requestConversations.map((conversation) => (
+          requestConversations.map(conversation => (
             <ContactUser
               key={conversation.id}
               conversation={conversation}
@@ -181,7 +181,7 @@ export default function ChatRoute() {
 
 function ContactUser({
   conversation,
-  currentUser,
+  currentUser
 }: {
   conversation: SerializeFrom<
     Conversation & {
@@ -213,14 +213,14 @@ function ContactUser({
           <div>
             <div className="flex item-center gap-1">
               <p>
-                {conversation.users.map((user) => (
+                {conversation.users.map(user => (
                   <strong key={user.id}>
                     {user.id !== currentUser.id && user.name}
                   </strong>
                 ))}
               </p>
 
-              {conversation.users.map((user) => {
+              {conversation.users.map(user => {
                 if (user.id !== currentUser.id) {
                   const lastActiveTime = dayjs(user.lastActiveAt);
                   const currentTime = dayjs();
@@ -278,14 +278,14 @@ function ContactUser({
             <p className="font-medium">
               Are you sure you want to delete{" "}
               {conversation.users.map(
-                (user) => user.id !== currentUser.id && user.name
+                user => user.id !== currentUser.id && user.name
               )}
               {" from your contact ?"}
             </p>
             <span className="self-start font-medium">
               ⚠️ That will also delete for{" "}
               {conversation.users.map(
-                (user) => user.id !== currentUser.id && user.name
+                user => user.id !== currentUser.id && user.name
               )}{" "}
               !
             </span>

@@ -7,11 +7,10 @@ var db;
 // the server with every change, but we want to make sure we don't
 // create a new connection to the DB with every change either.
 if (process.env.NODE_ENV === "production") {
-    exports.db = db = new client_1.PrismaClient();
-}
-else {
-    if (!global.__db) {
-        global.__db = new client_1.PrismaClient();
-    }
-    exports.db = db = global.__db;
+  exports.db = db = new client_1.PrismaClient();
+} else {
+  if (!global.__db) {
+    global.__db = new client_1.PrismaClient();
+  }
+  exports.db = db = global.__db;
 }

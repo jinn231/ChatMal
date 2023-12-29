@@ -1,6 +1,6 @@
-import type { User, UserRole } from "@prisma/client";
-import { db } from "~/utils/db.server";
+import { type User, type UserRole } from "@prisma/client";
 import bcrypt from "bcrypt";
+import { db } from "~/utils/db.server";
 import { getSession } from "~/utils/session.server";
 
 export type UserInfo = Pick<
@@ -17,13 +17,13 @@ export type UserInfo = Pick<
 
 export async function getUserByEmail(email: string): Promise<UserInfo | null> {
   return await db.user.findFirst({
-    where: { email: email },
+    where: { email: email }
   });
 }
 
 export async function getUserById(id: string): Promise<UserInfo | null> {
   return await db.user.findFirst({
-    where: { id: id },
+    where: { id: id }
   });
 }
 
@@ -31,7 +31,7 @@ export async function createUser({
   name,
   email,
   password,
-  ip,
+  ip
 }: {
   name: string;
   email: string;
@@ -44,12 +44,12 @@ export async function createUser({
       email: email,
       name: name,
       passwordHash: passwordHash,
-      lastLoginIp: ip,
-    },
+      lastLoginIp: ip
+    }
   });
 }
 
-export async function getUserId(request: Request) {
+export async function getUserId(request: Request): Promise<string | null> {
   const session = await getSession(request.headers.get("Cookie"));
 
   const userId = session.get("userId");
@@ -64,8 +64,8 @@ export async function getUserForAuthentication(
 ): Promise<User | null> {
   return await db.user.findFirst({
     where: {
-      email: email,
-    },
+      email: email
+    }
   });
 }
 
@@ -73,86 +73,86 @@ export async function getAllFriends(userId: string): Promise<UserInfo[]> {
   return await db.user.findMany({
     where: {
       id: {
-        not: userId,
-      },
-    },
+        not: userId
+      }
+    }
   });
 }
 
 export async function follow({
   id,
-  followerId,
+  followerId
 }: {
   id: string;
   followerId: string;
-}) {
+}): Promise<void> {
   await db.user.update({
     where: {
-      id: id,
+      id: id
     },
     data: {
       followers: {
-        push: followerId,
-      },
-    },
+        push: followerId
+      }
+    }
   });
   await db.user.update({
     where: {
-      id: followerId,
+      id: followerId
     },
     data: {
       following: {
-        push: id,
-      },
-    },
+        push: id
+      }
+    }
   });
 }
 
 export async function unfollow({
   id,
-  unFollowerId,
+  unFollowerId
 }: {
   id: string;
   unFollowerId: string;
-}) {
+}): Promise<void> {
   const currentUser = await db.user.findFirst({
     where: {
-      id: unFollowerId,
-    },
+      id: unFollowerId
+    }
   });
 
   const user = await db.user.findFirst({
     where: {
-      id: id,
-    },
+      id: id
+    }
   });
 
   await db.user.update({
     where: {
-      id: id,
+      id: id
     },
     data: {
-      followers: user?.followers.filter((i) => i !== unFollowerId),
-    },
+      followers: user?.followers.filter(i => i !== unFollowerId)
+    }
   });
   await db.user.update({
     where: {
-      id: unFollowerId,
+      id: unFollowerId
     },
     data: {
-      following: currentUser?.following.filter((i) => i !== id),
-    },
+      following: currentUser?.following.filter(i => i !== id)
+    }
   });
 }
 
 export async function getUserByList(users: string[]): Promise<UserInfo[]> {
   const newUsers = await Promise.all(
-    users.map(async (userId) => {
+    users.map(async userId => {
       return await getUserById(userId);
     })
   );
 
-  const filteredUsers = newUsers.filter((user) => user !== null) as UserInfo[];
+  const filteredUsers = newUsers.filter(user => user !== null) as UserInfo[];
 
   return filteredUsers;
 }
@@ -162,38 +162,38 @@ export async function updateUser({
   name,
   email,
   role,
-  lastActiveAt,
+  lastActiveAt
 }: {
   userId: string;
   name?: string;
   email?: string;
   role?: UserRole;
   lastActiveAt?: Date;
-}) {
+}): Promise<void> {
   await db.user.update({
     where: {
-      id: userId,
+      id: userId
     },
     data: {
       name: name,
       email: email,
       role: role,
-      lastActiveAt: lastActiveAt,
-    },
+      lastActiveAt: lastActiveAt
+    }
   });
 }
 
 export async function isUserFollowEachOther({
   userId1,
-  userId2,
+  userId2
 }: {
   userId1: string;
   userId2: string;
 }): Promise<boolean> {
   const user = await db.user.findUnique({
     where: {
-      id: userId1,
-    },
+      id: userId1
+    }
   });
 
   if (user?.following.includes(userId2) && user.followers.includes(userId2)) {

@@ -9,11 +9,11 @@ import { Result } from "~/utils/result.server";
 type ForgotPasswordForm = z.infer<typeof ForgotPasswordSchema>;
 
 const ForgotPasswordSchema = z.object({
-  email: z.string().trim().email("Email is not valid"),
+  email: z.string().trim().email("Email is not valid")
 });
 
 export async function action({
-  request,
+  request
 }: ActionFunctionArgs): Promise<
   TypedResponse<Result<null, FormError<ForgotPasswordForm, string>>>
 > {
@@ -27,8 +27,8 @@ export async function action({
       error: {
         fields,
         errors: parsedResult.error.format(),
-        message: "",
-      },
+        message: ""
+      }
     });
   }
 
@@ -41,8 +41,8 @@ export async function action({
       ok: false,
       error: {
         fields,
-        message: "User with this email does not exist",
-      },
+        message: "User with this email does not exist"
+      }
     });
   }
 
@@ -57,13 +57,15 @@ export default function ForgotPasswordRoute() {
   const fieldsError = !actionData?.ok ? actionData?.error.errors : null;
   const errorMessage = !actionData?.ok ? actionData?.error.message : null;
 
-  if(actionData?.ok){
+  if (actionData?.ok) {
     return (
       <div className="text-[var(--primary-color)]">
-        <h2 className="text-2xl ">Password reset link is successfully sent to your email</h2>
+        <h2 className="text-2xl ">
+          Password reset link is successfully sent to your email
+        </h2>
         <p>Link will be expired in 1 hr</p>
       </div>
-    )
+    );
   }
 
   return (

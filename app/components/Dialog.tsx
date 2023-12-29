@@ -1,15 +1,10 @@
-import {
-  ComponentPropsWithoutRef,
-  ForwardedRef,
-  forwardRef,
-  useEffect,
-  useRef,
-} from "react";
+import type { ComponentPropsWithoutRef, ForwardedRef } from "react";
+import React, { forwardRef, useEffect, useRef } from "react";
 
 function Dialog(
   prop: ComponentPropsWithoutRef<"dialog">,
   ref: ForwardedRef<HTMLDialogElement>
-) {
+): React.JSX.Element {
   const { children, ...dilaogProps } = prop;
   const mouseStartX = useRef(0);
   const mouseStartY = useRef(0);

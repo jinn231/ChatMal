@@ -3,7 +3,7 @@ import { useRef, useState } from "react";
 import HideIcon from "~/components/icons/HideIcon";
 import ShowIcon from "~/components/icons/ShowIcon";
 import z from "zod";
-import type { ActionFunctionArgs, TypedResponse} from "@remix-run/node";
+import type { ActionFunctionArgs, TypedResponse } from "@remix-run/node";
 import { json } from "@remix-run/node";
 import type { FormError } from "~/utils/error.server";
 import { login } from "~/model/auth.server";
@@ -12,11 +12,11 @@ type LoginForm = z.infer<typeof LoginSchema>;
 
 const LoginSchema = z.object({
   email: z.string().trim().email("Email is not valid"),
-  password: z.string().min(8, "Password is too short"),
+  password: z.string().min(8, "Password is too short")
 });
 
 export async function action({
-  request,
+  request
 }: ActionFunctionArgs): Promise<TypedResponse<FormError<LoginForm, string>>> {
   const fields = Object.fromEntries(await request.formData());
 
@@ -25,7 +25,7 @@ export async function action({
     return json({
       fields,
       errors: parseResult.error.format(),
-      message: "",
+      message: ""
     });
   }
 
@@ -34,7 +34,7 @@ export async function action({
   if (!loginResult?.ok) {
     return json({
       fields,
-      message: loginResult.error.message,
+      message: loginResult.error.message
     });
   }
 

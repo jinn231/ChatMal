@@ -1,5 +1,5 @@
 import { redirect } from "@remix-run/node";
-import type { ActionFunctionArgs } from "react-router-dom";
+import { type ActionFunctionArgs } from "react-router-dom";
 import { logout } from "~/model/auth.server";
 
 export async function loader(): Promise<Response> {
@@ -7,7 +7,7 @@ export async function loader(): Promise<Response> {
 }
 
 export async function action({
-  request,
+  request
 }: ActionFunctionArgs): Promise<Response> {
   return await logout(request);
 }

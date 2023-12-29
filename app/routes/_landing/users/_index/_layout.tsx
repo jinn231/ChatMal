@@ -4,7 +4,7 @@ import {
   SerializeFrom,
   type LinksFunction,
   type LoaderFunctionArgs,
-  type TypedResponse,
+  type TypedResponse
 } from "@remix-run/node";
 import styles from "./style.css";
 import { useEffect, useState } from "react";
@@ -16,14 +16,14 @@ import {
   getUserById,
   getUserByList,
   isUserFollowEachOther,
-  unfollow,
+  unfollow
 } from "~/model/user.server";
 import {
   Form,
   Link,
   useActionData,
   useFetcher,
-  useLoaderData,
+  useLoaderData
 } from "@remix-run/react";
 import { z } from "zod";
 import { Result } from "~/utils/result.server";
@@ -32,7 +32,7 @@ import {
   createConversation,
   getConversationByUserIds,
   isConversationAlreadyExist,
-  updateConversation,
+  updateConversation
 } from "~/model/conversation.server";
 import { CHAT_ROOM_STATUS } from "@prisma/client";
 import UsernameTag from "~/components/UsernameTag";
@@ -44,20 +44,20 @@ type FriendRequestForm = z.infer<typeof FriendActionSchema>;
 const FriendActionSchema = z.discriminatedUnion("type", [
   z.object({
     type: z.literal("follow"),
-    userId: z.string(),
+    userId: z.string()
   }),
   z.object({
     type: z.literal("unfollow"),
-    userId: z.string(),
-  }),
+    userId: z.string()
+  })
 ]);
 
 export async function action({
-  request,
+  request
 }: ActionFunctionArgs): Promise<
   TypedResponse<Result<null, FormError<FriendRequestForm, string>>>
 > {
-  const { id, following, followers } = await authenticate(request, (userId) =>
+  const { id, following, followers } = await authenticate(request, userId =>
     getUserById(userId)
   );
 
@@ -70,8 +70,8 @@ export async function action({
       ok: false,
       error: {
         fields,
-        errors: parseResult.error.format(),
-      },
+        errors: parseResult.error.format()
+      }
     });
   }
 
@@ -83,21 +83,22 @@ export async function action({
         ok: false,
         error: {
           fields,
-          message: "Already followed this user",
-        },
+          message: "Already followed this user"
+        }
       });
     }
 
-    const conversation = await getConversationByUserIds({ firstId: id, secondId: userId })
+    const conversation = await getConversationByUserIds({
+      firstId: id,
+      secondId: userId
+    });
 
-    if (
-      conversation === null
-    ) {
+    if (conversation === null) {
       await createConversation({
         members: [id, userId],
         status: followers.includes(userId)
           ? CHAT_ROOM_STATUS.NORMAL
-          : CHAT_ROOM_STATUS.REQUEST,
+          : CHAT_ROOM_STATUS.REQUEST
       });
     }
 
@@ -105,24 +106,24 @@ export async function action({
       await updateConversation({
         conversationId: conversation?.id || "",
         status: CHAT_ROOM_STATUS.NORMAL
-      })
+      });
     }
 
     await follow({
       id: userId,
-      followerId: id,
+      followerId: id
     });
   } else {
     // unfollow
     await unfollow({
       id: userId,
-      unFollowerId: id,
+      unFollowerId: id
     });
   }
 
   return json({
     ok: true,
-    data: null,
+    data: null
   });
 }
 
@@ -134,13 +135,13 @@ export async function loader({ request }: LoaderFunctionArgs): Promise<
     currentUserId: string;
   }>
 > {
-  const { id, followers, following } = await authenticate(request, (userId) =>
+  const { id, followers, following } = await authenticate(request, userId =>
     getUserById(userId)
   );
 
   const users = await getAllFriends(id);
   const filteredFriends = users.filter(
-    (user) => !user.followers.includes(id) && !user.following.includes(id)
+    user => !user.followers.includes(id) && !user.following.includes(id)
   );
   const followedUsers = await getUserByList(followers);
   const followingUsers = await getUserByList(following);
@@ -149,7 +150,7 @@ export async function loader({ request }: LoaderFunctionArgs): Promise<
     friends: filteredFriends,
     currentUserId: id,
     followers: followedUsers,
-    following: followingUsers,
+    following: followingUsers
   });
 }
 
@@ -178,8 +179,9 @@ export default function FriendRoute() {
       <div className="flex justify-end">
         <div className="btn-group m-2">
           <button
-            className={`button  ${filterFriend === "friends" ? "selected" : "btn"
-              }`}
+            className={`button  ${
+              filterFriend === "friends" ? "selected" : "btn"
+            }`}
             onClick={() => {
               localStorage.setItem("user-filter-type", "friends");
               setFilterFriendType("friends");
@@ -188,8 +190,9 @@ export default function FriendRoute() {
             <p>Friends</p>
           </button>
           <button
-            className={`button  ${filterFriend === "followers" ? "selected" : "btn"
-              }`}
+            className={`button  ${
+              filterFriend === "followers" ? "selected" : "btn"
+            }`}
             onClick={() => {
               localStorage.setItem("user-filter-type", "followers");
               setFilterFriendType("followers");
@@ -198,8 +201,9 @@ export default function FriendRoute() {
             <p>Followers</p>
           </button>
           <button
-            className={`button ${filterFriend === "following" ? "selected" : "btn"
-              }`}
+            className={`button ${
+              filterFriend === "following" ? "selected" : "btn"
+            }`}
             onClick={() => {
               localStorage.setItem("user-filter-type", "following");
               setFilterFriendType("following");
@@ -218,7 +222,7 @@ export default function FriendRoute() {
                 <h2>No friend to show</h2>
               </>
             ) : (
-              friends.map((friend) => (
+              friends.map(friend => (
                 <NewFriends key={friend.id} user={friend} />
               ))
             )}
@@ -230,7 +234,7 @@ export default function FriendRoute() {
                 <h2>You don't follow anyone</h2>
               </>
             ) : (
-              following.map((friend) => <Following user={friend} />)
+              following.map(friend => <Following user={friend} />)
             )}
           </>
         ) : filterFriend === "followers" ? (
@@ -239,7 +243,7 @@ export default function FriendRoute() {
               <h2>You have no follower</h2>
             </>
           ) : (
-            followers.map((user) => (
+            followers.map(user => (
               <Follower user={user} following={following} />
             ))
           )
@@ -313,13 +317,13 @@ function Following({ user }: { user: SerializeFrom<UserInfo> }): JSX.Element {
 
 function Follower({
   user,
-  following,
+  following
 }: {
   user: SerializeFrom<UserInfo>;
   following: SerializeFrom<UserInfo>[];
 }): JSX.Element {
   const fetcher = useFetcher();
-  const userExists = following.find((item) => item.id === user.id);
+  const userExists = following.find(item => item.id === user.id);
 
   if (fetcher.state === "loading" || fetcher.state === "submitting") {
     return <></>;

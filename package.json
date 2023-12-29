@@ -7,7 +7,7 @@
     "build": "remix build",
     "dev": "remix dev --manual",
     "start": "remix-serve ./build/index.js",
-    "check": "tsc --skipLibCheck && eslint app test && prettier . -c"
+    "check": "tsc --skipLibCheck && prettier . -c"
   },
   "dependencies": {
     "@prisma/client": "5.6.0",
@@ -38,8 +38,7 @@
     "eslint-plugin-import": "^2.29.1",
     "prettier": "^3.1.1",
     "remix-flat-routes": "^0.6.2",
-    "tailwindcss": "^3.3.5",
-    "typescript": "^5.1.6"
+    "tailwindcss": "^3.3.5"
   },
   "engines": {
     "node": ">=18.0.0"

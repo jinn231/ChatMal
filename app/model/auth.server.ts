@@ -1,19 +1,19 @@
+import { redirect } from "@remix-run/node";
+import bcrypt from "bcrypt";
 import { getClientIPAddress } from "remix-utils/get-client-ip-address";
+import { safeRedirect } from "remix-utils/safe-redirect";
+import { type Result } from "~/utils/result.server";
+import {
+  commitSession,
+  destroySession,
+  getSession
+} from "~/utils/session.server";
 import {
   createUser,
   getUserByEmail,
   getUserForAuthentication,
-  getUserId,
+  getUserId
 } from "./user.server";
-import {
-  commitSession,
-  destroySession,
-  getSession,
-} from "~/utils/session.server";
-import { redirect } from "@remix-run/node";
-import { safeRedirect } from "remix-utils/safe-redirect";
-import type { Result } from "~/utils/result.server";
-import bcrypt from "bcrypt";
 
 export async function register(
   request: Request,
@@ -27,8 +27,8 @@ export async function register(
     return {
       ok: false,
       error: {
-        message: "User with this email already exists",
-      },
+        message: "User with this email already exists"
+      }
     };
   }
 
@@ -36,7 +36,7 @@ export async function register(
     email,
     name,
     password,
-    ip,
+    ip
   });
 
   const session = await getSession();
@@ -46,15 +46,15 @@ export async function register(
     ok: true,
     data: redirect(safeRedirect("/"), {
       headers: {
-        "Set-Cookie": await commitSession(session),
-      },
-    }),
+        "Set-Cookie": await commitSession(session)
+      }
+    })
   };
 }
 
 export async function login({
   email,
-  password,
+  password
 }: {
   email: string;
   password: string;
@@ -65,8 +65,8 @@ export async function login({
     return {
       ok: false,
       error: {
-        message: "Invalid email or passwords",
-      },
+        message: "Invalid email or passwords"
+      }
     };
   }
 
@@ -76,8 +76,8 @@ export async function login({
     return {
       ok: false,
       error: {
-        message: "Invalid email or passwords",
-      },
+        message: "Invalid email or passwords"
+      }
     };
   }
 
@@ -88,9 +88,9 @@ export async function login({
     ok: true,
     data: redirect(safeRedirect("/"), {
       headers: {
-        "Set-Cookie": await commitSession(session),
-      },
-    }),
+        "Set-Cookie": await commitSession(session)
+      }
+    })
   };
 }
 
@@ -100,7 +100,7 @@ export async function authenticate<T>(
 ): Promise<T> {
   const userId = await getUserId(request);
 
-  console.log(userId)
+  console.log(userId);
 
   const user = userId !== null ? await getUser(userId) : null;
 
@@ -116,7 +116,7 @@ export async function logout(request: Request): Promise<Response> {
 
   return redirect(safeRedirect("/"), {
     headers: {
-      "Set-Cookie": await destroySession(session),
-    },
+      "Set-Cookie": await destroySession(session)
+    }
   });
 }

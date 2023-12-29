@@ -1,12 +1,10 @@
-import {
-  json,
-  redirect,
-  type LinksFunction,
+import type {
   TypedResponse,
   ActionFunctionArgs,
   SerializeFrom,
   LoaderFunctionArgs
 } from "@remix-run/node";
+import { json, redirect, type LinksFunction } from "@remix-run/node";
 import SendIcon from "~/components/icons/SendIcon";
 import styles from "./style.css";
 import LeftArrowIcon from "~/components/icons/LeftArrowIcon";
@@ -17,11 +15,9 @@ import { Conversation, DeleteForUserIds, Messages } from "@prisma/client";
 import {
   Form,
   Link,
-  useActionData,
   useFetcher,
   useLoaderData,
-  useRevalidator,
-  useSubmit
+  useRevalidator
 } from "@remix-run/react";
 import { z } from "zod";
 import { Result } from "~/utils/result.server";
@@ -84,8 +80,6 @@ export async function loader({ request, params }: LoaderFunctionArgs): Promise<
     throw redirect("/chat");
   }
 
-  console.log(conversation.Messages);
-
   return json({
     currentUser: user,
     conversation: conversation
@@ -101,7 +95,9 @@ export async function action({
 
   const fields = Object.fromEntries(await request.formData());
 
+  console.log(fields);
   const parsedResult = MessageFormSchema.safeParse(fields);
+
   if (!parsedResult.success) {
     return json({
       ok: false,
@@ -114,8 +110,8 @@ export async function action({
 
   if (parsedResult.data.type === "send") {
     const { conversationId, message, senderId, receiverId } = parsedResult.data;
-
     emitter.emit("send-message", receiverId);
+
     await createMessage({
       conversationId,
       message,
@@ -125,10 +121,12 @@ export async function action({
     return json({ ok: true, data: null });
   } else if (parsedResult.data.type === "delete") {
     const { messageId } = parsedResult.data;
+    emitter.emit("send-message", id);
 
     await deleteMessage({ messageId, userId: id });
   } else if (parsedResult.data.type === "seen") {
     const { messageId } = parsedResult.data;
+    emitter.emit("send-message", id);
 
     await updateMessage({
       messageId: messageId,
@@ -217,12 +215,12 @@ export default function ChatSessionRoute() {
           <button
             onClick={() =>
               fetcher.submit(
-                {
+                JSON.stringify({
                   type: "follow",
                   userId: conversation.userIds.filter(
                     id => id !== currentUser.id
                   )[0]
-                },
+                }),
                 {
                   method: "POST",
                   action: "/users"
@@ -245,7 +243,7 @@ export default function ChatSessionRoute() {
             <button
               onClick={() =>
                 fetcher.submit(
-                  {
+                  JSON.stringify({
                     type: "send",
                     senderId: currentUser.id,
                     receiverId: conversation.users.filter(
@@ -253,7 +251,7 @@ export default function ChatSessionRoute() {
                     )[0].id,
                     message: "Hi",
                     conversationId: conversation.id
-                  },
+                  }),
                   {
                     method: "POST",
                     action: `/chat/${conversation.id}`
@@ -265,7 +263,7 @@ export default function ChatSessionRoute() {
                 className="text-2xl"
                 onClick={() =>
                   fetcher.submit(
-                    {
+                    JSON.stringify({
                       type: "send",
                       senderId: currentUser.id,
                       receiverId: conversation.users.filter(
@@ -273,7 +271,7 @@ export default function ChatSessionRoute() {
                       )[0].id,
                       message: "Hi",
                       conversationId: conversation.id
-                    },
+                    }),
                     {
                       method: "POST",
                       action: `/chat/${conversation.id}`
@@ -293,7 +291,7 @@ export default function ChatSessionRoute() {
             <button
               onClick={() =>
                 fetcher.submit(
-                  {
+                  JSON.stringify({
                     type: "send",
                     senderId: currentUser.id,
                     receiverId: conversation.users.filter(
@@ -301,7 +299,7 @@ export default function ChatSessionRoute() {
                     )[0].id,
                     message: "Hi",
                     conversationId: conversation.id
-                  },
+                  }),
                   {
                     method: "POST",
                     action: `/chat/${conversation.id}`
@@ -321,14 +319,14 @@ export default function ChatSessionRoute() {
                     key={message.id}
                     message={message}
                     currentUser={currentUser}
-                    conversationId={conversation.id}
+                    conversation={conversation}
                   />
                 ) : (
                   <ReceiverMessage
                     key={message.id}
                     message={message}
                     currentUser={currentUser}
-                    conversationId={conversation.id}
+                    conversation={conversation}
                   />
                 )}
               </>
@@ -372,13 +370,13 @@ export default function ChatSessionRoute() {
 function SenderMessage({
   message,
   currentUser,
-  conversationId
+  conversation
 }: {
   message: SerializeFrom<
     Messages & { deleteFor: DeleteForUserIds[] } & { sender: { name: string } }
   >;
   currentUser: SerializeFrom<UserInfo>;
-  conversationId: string;
+  conversation: SerializeFrom<Conversation & { users: UserInfo[] }>;
 }) {
   const [showDropdown, setShowDropdown] = useState<boolean>(false);
   const fetcher = useFetcher();
@@ -399,16 +397,16 @@ function SenderMessage({
 
   useEffect(() => {
     fetcher.submit(
-      {
+      JSON.stringify({
         type: "seen",
         messageId: message.id
-      },
+      }),
       {
         method: "POST",
-        action: `/chat/${conversationId}`
+        action: `/chat/${conversation.id}`
       }
     );
-  }, [conversationId]);
+  }, [conversation.id]);
 
   return (
     <div className="flex flex-col my-1 relative py-4">
@@ -420,13 +418,13 @@ function SenderMessage({
       </div>
       <div className="receiver">
         {message.deleteFor.length !== 0 &&
-        !message.deleteFor.find(u => u.userId === currentUser.id) ? (
-          <p className="message">
-            <span>{detectLinks(message.message)}</span>
-          </p>
-        ) : (
+        message.deleteFor.find(u => u.userId === currentUser.id) ? (
           <p className="sender-deleted-message">
             <span>Deleted Message</span>
+          </p>
+        ) : (
+          <p className="message">
+            <span>{detectLinks(message.message)}</span>
           </p>
         )}
       </div>
@@ -447,6 +445,15 @@ function SenderMessage({
             <Form method="POST">
               <input type="hidden" name="type" value="delete" />
               <input type="hidden" name="messageId" value={message.id} />
+              <input
+                type="hidden"
+                name="receiverId"
+                value={
+                  conversation.users.filter(
+                    user => user.id !== currentUser.id
+                  )[0].id
+                }
+              />
               <button>
                 <span className="text-black text-sm">Delete</span>
               </button>
@@ -461,13 +468,13 @@ function SenderMessage({
 function ReceiverMessage({
   message,
   currentUser,
-  conversationId
+  conversation
 }: {
   message: SerializeFrom<
     Messages & { deleteFor: DeleteForUserIds[] } & { sender: { name: string } }
   >;
   currentUser: SerializeFrom<UserInfo>;
-  conversationId: string;
+  conversation: SerializeFrom<Conversation & { users: UserInfo[] }>;
 }) {
   const [showDropdown, setShowDropdown] = useState<boolean>(false);
   const fetcher = useFetcher();
@@ -488,16 +495,16 @@ function ReceiverMessage({
 
   useEffect(() => {
     fetcher.submit(
-      {
+      JSON.stringify({
         type: "seen",
         messageId: message.id
-      },
+      }),
       {
         method: "POST",
-        action: `/chat/${conversationId}`
+        action: `/chat/${conversation.id}`
       }
     );
-  }, [conversationId]);
+  }, [conversation.id]);
 
   return (
     <div className="flex flex-col my-1 relative py-4">
@@ -531,6 +538,15 @@ function ReceiverMessage({
             <Form method="POST">
               <input type="hidden" name="type" value="delete" />
               <input type="hidden" name="messageId" value={message.id} />
+              <input
+                type="hidden"
+                name="receiverId"
+                value={
+                  conversation.users.filter(
+                    user => user.id !== currentUser.id
+                  )[0].id
+                }
+              />
               <button>
                 <span className="text-black text-sm">Delete</span>
               </button>

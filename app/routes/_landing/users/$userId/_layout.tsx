@@ -1,15 +1,16 @@
 import {
-  LinksFunction,
-  LoaderFunctionArgs,
-  TypedResponse,
+  type LinksFunction,
+  type LoaderFunctionArgs,
+  type TypedResponse
 } from "@remix-run/node";
-import { Link, useFetcher, useLoaderData } from "@remix-run/react";
+import { useFetcher, useLoaderData } from "@remix-run/react";
 import { useState } from "react";
 import { json, redirect } from "react-router-dom";
 import LeftArrowIcon from "~/components/icons/LeftArrowIcon";
 import MessageIcon from "~/components/icons/MessageIcon";
 import { authenticate } from "~/model/auth.server";
-import { UserInfo, getUserById, getUserByList } from "~/model/user.server";
+import type { UserInfo } from "~/model/user.server";
+import { getUserById, getUserByList } from "~/model/user.server";
 import styles from "./style.css";
 import UsernameTag from "~/components/UsernameTag";
 import dayjs from "dayjs";
@@ -24,7 +25,7 @@ export async function loader({ request, params }: LoaderFunctionArgs): Promise<
     following: UserInfo[];
   }>
 > {
-  const currentUser = await authenticate(request, (userId) =>
+  const currentUser = await authenticate(request, userId =>
     getUserById(userId)
   );
 
@@ -50,7 +51,7 @@ export async function loader({ request, params }: LoaderFunctionArgs): Promise<
     currentUser,
     user,
     followers,
-    following,
+    following
   });
 }
 
@@ -92,13 +93,13 @@ export default function UsersProfileLayout() {
                 className="bg-[green]  px-1 text-center flex items-center rounded-[.2rem]"
                 onClick={() =>
                   fetcher.submit(
-                    {
+                    JSON.stringify({
                       type: "follow",
-                      userId: user.id,
-                    },
+                      userId: user.id
+                    }),
                     {
                       method: "POST",
-                      action: "/users",
+                      action: "/users"
                     }
                   )
                 }
@@ -145,8 +146,8 @@ export default function UsersProfileLayout() {
               </div>
             </>
           ) : tab === "followers" ? (
-            followers.map((u) => (
-              <div className="flex gap-2 items-center shadow-md border border-[var(--primary-color)] shadow-md hover:bg-[gray] transition-all delay-100 ease-in-out p-1 rounded-md">
+            followers.map(u => (
+              <div className="flex gap-2 items-center border border-[var(--primary-color)] shadow-md hover:bg-[gray] transition-all delay-100 ease-in-out p-1 rounded-md">
                 <img
                   className="w-[35px] h-[35px] rounded-full"
                   src="/images/avatars/gentleman.png"
@@ -159,8 +160,8 @@ export default function UsersProfileLayout() {
             ))
           ) : (
             tab === "following" &&
-            following.map((u) => (
-              <div className="flex gap-2 items-center shadow-md border border-[var(--primary-color)] shadow-md hover:bg-[gray] transition-all delay-100 ease-in-out p-1 rounded-md">
+            following.map(u => (
+              <div className="flex gap-2 items-center border border-[var(--primary-color)] shadow-md hover:bg-[gray] transition-all delay-100 ease-in-out p-1 rounded-md">
                 <img
                   className="w-[35px] h-[35px] rounded-full"
                   src="/images/avatars/gentleman.png"

@@ -1,17 +1,17 @@
 /** @type {import('eslint').Linter.Config} */
 module.exports = {
   parserOptions: {
-    project: "./tsconfig.json",
+    project: "./tsconfig.json"
   },
   extends: [
     "@remix-run/eslint-config",
     "@remix-run/eslint-config/node",
-    "plugin:deprecation/recommended",
+    "plugin:deprecation/recommended"
   ],
   rules: {
     "@typescript-eslint/explicit-function-return-type": [
       "warn",
-      { allowExpressions: true },
+      { allowExpressions: true }
     ],
     "@typescript-eslint/no-unnecessary-type-assertion": "warn",
     "import/consistent-type-specifier-style": ["warn", "prefer-inline"],
@@ -23,11 +23,11 @@ module.exports = {
           ["builtin", "external", "internal"],
           "parent",
           "sibling",
-          "index",
+          "index"
         ],
-        alphabetize: { order: "asc", orderImportKind: "asc" },
-      },
+        alphabetize: { order: "asc", orderImportKind: "asc" }
+      }
     ],
-    "deprecation/deprecation": "warn",
-  },
+    "deprecation/deprecation": "warn"
+  }
 };
